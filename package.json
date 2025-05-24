@@ -1,0 +1,47 @@
+{
+  "name": "verslo-daigynas-directory",
+  "version": "1.0.0",
+  "description": "Išsamiausias Lietuvoje verslo adresų registracijos paslaugų katalogas, sukurtas Bendravietės iniciatyva.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "keywords": [
+    "virtualus biuras",
+    "registracijos adresas",
+    "verslo adresas",
+    "įmonės registracijos adresas",
+    "virtuali buveinė",
+    "juridinio asmens registracija",
+    "įmonės steigimas",
+    "verslo pradžia",
+    "bendravietė",
+    "įmonės adreso nuoma",
+    "buveinės adresas Vilniuje",
+    "įmonės registracija internetu",
+    "įmonės adresas be patalpų",
+    "virtualus biuras Lietuva",
+    "įmonės steigimas su adresu",
+    "verslo registravimas Vilniuje",
+    "individualios veiklos registracija",
+    "mažosios bendrijos adresas",
+    "registracijos adresas su pašto dėžute",
+    "kaip pasirinkti verslo adresą",
+    "įmonės steigimo paslaugos",
+    "juridinio adreso paslaugos",
+    "biuro paslaugos startuoliams"
+  ],
+  "author": "Bendravietės Komanda",
+  "license": "MIT",
+  "dependencies": {
+    "autoprefixer": "^10.4.14",
+    "next": "^15.1.8",
+    "next-i18next": "^13.1.6",
+    "postcss": "^8.4.21",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwindcss": "^3.3.2"
+  }
+}
