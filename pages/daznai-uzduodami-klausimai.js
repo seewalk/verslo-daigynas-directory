@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import FAQ from '../components/FAQ';
-import FAQIntroduction from '../components/FaqIntroduction';
+import FaqIntroduction from '../components/FaqIntroduction';
 
 const FAQPage = () => {
   // Animation variants - match the style from other components
@@ -66,7 +66,7 @@ const FAQPage = () => {
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* FAQ Introduction Component */}
-        <FAQIntroduction />
+        <FaqIntroduction />
         
         {/* FAQ Container - styled like other content containers */}
         <motion.div 
