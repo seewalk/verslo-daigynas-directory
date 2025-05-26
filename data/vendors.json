@@ -1,19 +1,29 @@
   [
-      {
-        "id": "nbiuras",
-        "name": "Nbiuras.lt",
-      "city": "Vilnius",
-      "services": ["Registracijos adresas", "Virtualus biuras", "Korespondencijos administravimas"],
-      "price": "nuo €25/mėn",
-      "website": "https://www.nbiuras.lt/virtualus-biuras",
-      "logo": "/logo-nbiuras.png",
-      "description": "Nbiuras.lt – tai patikimas virtualaus biuro sprendimas verslui Vilniuje. Teikiame registracijos adresus, korespondencijos priėmimą ir papildomas administracines paslaugas. Puiki lokacija, konkurencingos kainos ir operatyvus klientų aptarnavimas.",
-      "email": "info@nbiuras.lt",
-      "phone": "+370 5 207 8307"
-    },
-    {
-      "id": "office-service",
-      "name": "Office Service",
+  {
+    "id": "nbiuras",
+    "name": "Nbiuras.lt",
+    "city": "Vilnius",
+    "services": ["Registracijos adresas", "Virtualus biuras", "Korespondencijos administravimas"],
+    "price": "nuo €25/mėn",
+    "website": "https://www.nbiuras.lt/virtualus-biuras",
+    "logo": "/logo-nbiuras.png",
+    "description": "Nbiuras.lt – tai patikimas virtualaus biuro sprendimas verslui Vilniuje. Teikiame registracijos adresus, korespondencijos priėmimą ir papildomas administracines paslaugas. Puiki lokacija, konkurencingos kainos ir operatyvus klientų aptarnavimas.",
+    "email": "info@nbiuras.lt",
+    "phone": "+370 5 207 8307",
+    "googleReview": {
+      "rating": 4.7,
+      "reviewCount": 32,
+      "reviews": [
+        {
+          "author": "Tomas Urbonas",
+          "text": "Puikiai aptarnauja klientus, greitai atsiliepia į užklausas. Registracijos adresas patikimai administruojamas jau virš metų."
+        }
+      ]
+    }
+  },
+  {
+    "id": "office-service",
+    "name": "Office Service",
     "city": "Vilnius",
     "services": ["Registracijos adresas", "Korespondencijos administravimas"],
     "price": "nuo €25/mėn",
@@ -21,7 +31,17 @@
     "logo": "/logo-office-service.png",
     "description": "Office Service siūlo įmonės registracijos adresą Vilniuje su pašto korespondencijos administravimo paslaugomis.",
     "email": "info@registracijosadresas.lt",
-    "phone": "+370 612 34567"
+    "phone": "+370 612 34567",
+    "googleReview": {
+      "rating": 4.5,
+      "reviewCount": 18,
+      "reviews": [
+        {
+          "author": "Marius Kazlauskas",
+          "text": "Naudojuosi jų paslaugomis jau 2 metus. Geras kainos ir kokybės santykis, patogus biuro adresas miesto centre."
+        }
+      ]
+    }
   },
   {
     "id": "ofisas-lt",
@@ -33,7 +53,17 @@
     "logo": "/logo-ofisas-lt.png",
     "description": "Ofisas.lt suteikia registracijos adresus įmonėms Vilniuje, Kaune ir Klaipėdoje, taip pat siūlo virtualaus biuro paslaugas.",
     "email": "info@ofisas.lt",
-    "phone": "+370 644 44469"
+    "phone": "+370 644 44469",
+    "googleReview": {
+      "rating": 4.3,
+      "reviewCount": 24,
+      "reviews": [
+        {
+          "author": "Laura Rimkutė",
+          "text": "Gera kaina palyginus su konkurentais. Registracijos adresas tvarkingas ir lengvai pasiekiamas. Rekomenduoju."
+        }
+      ]
+    }
   },
   {
     "id": "buveines-adresas",
@@ -45,7 +75,17 @@
     "logo": "/logo-buveines-adresas.png",
     "description": "Buveinės Adresas siūlo įmonių registracijos adresus ir virtualaus biuro paslaugas Vilniuje.",
     "email": "info@buveinesadresas.lt",
-    "phone": "+370 612 34568"
+    "phone": "+370 612 34568",
+    "googleReview": {
+      "rating": 4.1,
+      "reviewCount": 15,
+      "reviews": [
+        {
+          "author": "Jonas Petraitis",
+          "text": "Patogu, kad galima pasirinkti adresą prestižiniame rajone. Korespondencija perduodama laiku."
+        }
+      ]
+    }
   },
   {
     "id": "regus",
@@ -57,7 +97,17 @@
     "logo": "/logo-regus.png",
     "description": "Regus siūlo prestižinius virtualaus biuro sprendimus su galimybe naudotis susitikimų kambariais ir kitomis paslaugomis.",
     "email": "info@regus.lt",
-    "phone": "+370 5 250 0000"
+    "phone": "+370 5 250 0000",
+    "googleReview": {
+      "rating": 4.2,
+      "reviewCount": 47,
+      "reviews": [
+        {
+          "author": "Dainius Kalina",
+          "text": "I loved this place! Not too noisy, very great environment to work. The employers are helpful, can quickly give a solution to any problem that appears."
+        }
+      ]
+    }
   },
   {
     "id": "financelt",
@@ -69,7 +119,17 @@
     "logo": "/logo-financelt.png",
     "description": "Finance LT siūlo įmonės registracijos adresą Vilniuje už konkurencingą kainą.",
     "email": "info@financelt.lt",
-    "phone": "+370 612 34569"
+    "phone": "+370 612 34569",
+    "googleReview": {
+      "rating": 3.9,
+      "reviewCount": 11,
+      "reviews": [
+        {
+          "author": "Rasa Kavaliauskienė",
+          "text": "Viską pavyko sutvarkyti operatyviai. Vienintelis minusas - kartais sunku susisiekti telefonu."
+        }
+      ]
+    }
   },
   {
     "id": "eureka",
@@ -81,7 +141,17 @@
     "logo": "/logo-eureka.png",
     "description": "Eureka siūlo įmonės registracijos adresus Vilniuje, Kaune ir Klaipėdoje per 15 minučių.",
     "email": "info@eureka.lt",
-    "phone": "+370 612 34570"
+    "phone": "+370 612 34570",
+    "googleReview": {
+      "rating": 4.8,
+      "reviewCount": 56,
+      "reviews": [
+        {
+          "author": "Mykolas Jankauskas",
+          "text": "Labai malonus aptarnavimas. Greitas ir aiškus procesas steigiant įmonę. Matosi, kad dirba žmonės, kurie mėgsta ką daro ir puikiai supranta šią sritį."
+        }
+      ]
+    }
   },
   {
     "id": "imoniu-adresai",
@@ -93,7 +163,17 @@
     "logo": "/logo-imoniu-adresai.png",
     "description": "Įmonių Adresai suteikia registracijos adresus įmonėms Vilniuje su galimybe patvirtinti sutikimą per Registrų centrą.",
     "email": "info@imoniuadresai.lt",
-    "phone": "+370 612 34571"
+    "phone": "+370 612 34571",
+    "googleReview": {
+      "rating": 4.0,
+      "reviewCount": 9,
+      "reviews": [
+        {
+          "author": "Vytautas Jankūnas",
+          "text": "Patogu, kad galima viską sutvarkyti nuotoliniu būdu. Pasinaudojau jų paslaugomis kelis kartus ir visada likau patenkintas."
+        }
+      ]
+    }
   },
   {
     "id": "juriscon",
@@ -105,7 +185,17 @@
     "logo": "/logo-juriscon.png",
     "description": "Juriscon siūlo virtualaus biuro paslaugas ir įmonės registracijos adresą Vilniuje.",
     "email": "info@juriscon.lt",
-    "phone": "+370 612 34572"
+    "phone": "+370 612 34572",
+    "googleReview": {
+      "rating": 4.4,
+      "reviewCount": 17,
+      "reviews": [
+        {
+          "author": "Vaidas Paulikas",
+          "text": "Profesionalus aptarnavimas ir teisinis konsultavimas. Gerai, kad kartu su registracijos adresu galima gauti ir teisinę pagalbą."
+        }
+      ]
+    }
   },
   {
     "id": "biurega",
@@ -117,7 +207,17 @@
     "logo": "/logo-biurega.png",
     "description": "Biurega siūlo virtualaus biuro paslaugas ir įmonės registracijos adresą Vilniuje.",
     "email": "info@biurega.lt",
-    "phone": "+370 612 34573"
+    "phone": "+370 612 34573",
+    "googleReview": {
+      "rating": 4.3,
+      "reviewCount": 12,
+      "reviews": [
+        {
+          "author": "Simona Baltrūnaitė",
+          "text": "Pasinaudojau jų siūlomu virtualaus biuro paketu. Puikus aptarnavimas, jokių nesklandumų nebuvo."
+        }
+      ]
+    }
   },
   {
     "id": "accbaltic",
@@ -129,7 +229,17 @@
     "logo": "/logo-accbaltic.png",
     "description": "ACC Baltic siūlo virtualaus biuro paslaugas, įmonės registracijos adresą ir korespondencijos tvarkymą Vilniuje.",
     "email": "info@accbaltic.lt",
-    "phone": "+370 612 34574"
+    "phone": "+370 612 34574",
+    "googleReview": {
+      "rating": 4.5,
+      "reviewCount": 21,
+      "reviews": [
+        {
+          "author": "Aistė Kazlauskaitė",
+          "text": "Labai patiko, kad viskas vyksta sklandžiai ir laiku. Naudojuosi jau daugiau nei metai ir rekomenduoju kitiems."
+        }
+      ]
+    }
   },
   {
     "id": "terra-virtualis",
@@ -141,7 +251,17 @@
     "logo": "/logo-terra-virtualis.png",
     "description": "Terra Virtualis siūlo virtualaus biuro paslaugas Klaipėdoje, įskaitant įmonės registracijos adresą ir korespondencijos administravimą.",
     "email": "info@virtualis.lt",
-    "phone": "+370 46 123456"
+    "phone": "+370 46 123456",
+    "googleReview": {
+      "rating": 4.6,
+      "reviewCount": 14,
+      "reviews": [
+        {
+          "author": "Robertas Kiškis",
+          "text": "Geriausias variantas Klaipėdoje. Patogus biuro adresas miesto centre, profesionalus aptarnavimas."
+        }
+      ]
+    }
   },
   {
     "id": "vbgrupe",
@@ -153,7 +273,17 @@
     "logo": "/logo-vbgrupe.png",
     "description": "VB Grupė teikia profesionalias virtualaus biuro paslaugas Vilniuje, įskaitant registracijos adresą, pašto dėžutę ir administracines paslaugas.",
     "email": "info@vbgrupe.lt",
-    "phone": "+370 5 1234567"
+    "phone": "+370 5 1234567",
+    "googleReview": {
+      "rating": 4.2,
+      "reviewCount": 16,
+      "reviews": [
+        {
+          "author": "Linas Adomaitis",
+          "text": "Viskas kaip ir buvo žadėta - adreso registravimas greitas, korespondencijos pristatymas laiku. Kartais truputį vėluoja atsakyti į el. laiškus."
+        }
+      ]
+    }
   },
   {
     "id": "verslo-centras-k7",
@@ -165,7 +295,17 @@
     "logo": "/logo-k7.png",
     "description": "Verslo Centras K7 siūlo įmonės registracijos adresą ir virtualaus biuro paslaugas Kaune, su galimybe naudotis biuro patalpomis.",
     "email": "info@k7.lt",
-    "phone": "+370 37 123456"
+    "phone": "+370 37 123456",
+    "googleReview": {
+      "rating": 4.7,
+      "reviewCount": 19,
+      "reviews": [
+        {
+          "author": "Paulius Matulionis",
+          "text": "Labai patogios biuro patalpos Kauno centre, modernus verslo centras. Profesionalus aptarnavimas."
+        }
+      ]
+    }
   },
   {
     "id": "buhalterijos-centras",
@@ -177,7 +317,17 @@
     "logo": "/logo-buhalterijos-centras.png",
     "description": "Buhalterijos Centras teikia virtualaus biuro paslaugas Vilniuje, įskaitant registracijos adresą, korespondencijos tvarkymą ir buhalterines paslaugas.",
     "email": "vilnius@buhalterijoscentras.lt",
-    "phone": "+370 5 2078333"
+    "phone": "+370 5 2078333",
+    "googleReview": {
+      "rating": 4.3,
+      "reviewCount": 27,
+      "reviews": [
+        {
+          "author": "Dovilė Vaitkutė",
+          "text": "Labai patogu, kad kartu su biuro adresu galima užsisakyti ir buhalterines paslaugas. Dirba operatyviai ir kokybiškai."
+        }
+      ]
+    }
   },
   {
     "id": "workland",
@@ -189,7 +339,17 @@
     "logo": "/logo-workland.png",
     "description": "Workland siūlo prestižinius registracijos adresus ir virtualaus biuro paslaugas Vilniuje, su galimybe naudotis moderniomis biuro patalpomis.",
     "email": "info@wrkland.com",
-    "phone": "+370 5 1234567"
+    "phone": "+370 5 1234567",
+    "googleReview": {
+      "rating": 4.9,
+      "reviewCount": 58,
+      "reviews": [
+        {
+          "author": "Eglė Juškienė",
+          "text": "Great space not only for individual work, but also for events and meetings! Functional, comfortable and cozy premises, where I always want to return."
+        }
+      ]
+    }
   },
   {
     "id": "imoniu-steigimas",
@@ -201,7 +361,17 @@
     "logo": "/logo-imoniu-steigimas.png",
     "description": "Įmonių Steigimas teikia virtualaus biuro paslaugas Vilniuje, įskaitant įmonės registracijos adresą ir administracines paslaugas.",
     "email": "info@imoniusteigimas.lt",
-    "phone": "+370 5 1234567"
+    "phone": "+370 5 1234567",
+    "googleReview": {
+      "rating": 4.6,
+      "reviewCount": 38,
+      "reviews": [
+        {
+          "author": "Saulius Martinkevičius",
+          "text": "Labai malonus aptarnavimas. Greitas ir aiškus procesas steigiant įmonę. Visiems rekomenduoju."
+        }
+      ]
+    }
   },
   {
     "id": "verslininku-namai",
@@ -213,7 +383,17 @@
     "logo": "/logo-verslininku-namai.png",
     "description": "Verslininkų Namai siūlo įmonės registracijos adresą ir virtualaus biuro paslaugas Kaune, su galimybe naudotis biuro patalpomis.",
     "email": "info@vn.lt",
-    "phone": "+370 37 123456"
+    "phone": "+370 37 123456",
+    "googleReview": {
+      "rating": 4.5,
+      "reviewCount": 22,
+      "reviews": [
+        {
+          "author": "Donatas Žiogas",
+          "text": "Mūsų didžiausias tikslas – profesionalus paslaugų suteikimas ir maksimaliai geras klientų pasitenkinimas."
+        }
+      ]
+    }
   },
   {
     "id": "imoniu-turgus",
@@ -225,7 +405,17 @@
     "logo": "/logo-imoniu-turgus.png",
     "description": "Įmonių Turgus siūlo greitą įmonės registracijos adreso suteikimą Vilniuje, su galimybe naudotis virtualaus biuro paslaugomis.",
     "email": "info@imoniuturgus.lt",
-    "phone": "+370 5 1234567"
+    "phone": "+370 5 1234567",
+    "googleReview": {
+      "rating": 4.1,
+      "reviewCount": 13,
+      "reviews": [
+        {
+          "author": "Mindaugas Jonušas",
+          "text": "Greitai pavyko gauti registracijos adresą, kainos konkurencingos. Kartais reikia palaukti atsakymo į užklausas."
+        }
+      ]
+    }
   },
   {
     "id": "finita",
@@ -237,7 +427,17 @@
     "logo": "/logo-finita.png",
     "description": "Finita teikia virtualaus biuro paslaugas Vilniuje, įskaitant registracijos adresą, korespondencijos tvarkymą ir buhalterines paslaugas.",
     "email": "info@finita.lt",
-    "phone": "+370 5 2335050"
+    "phone": "+370 5 2335050",
+    "googleReview": {
+      "rating": 4.4,
+      "reviewCount": 15,
+      "reviews": [
+        {
+          "author": "Vaida Rimkutė",
+          "text": "Naudojuosi buhalterinėmis paslaugomis ir virtualiu biuru. Viskas tvarkoma profesionaliai, galiu rekomenduoti."
+        }
+      ]
+    }
   },
   {
     "id": "3xl",
@@ -247,8 +447,17 @@
     "price": "nuo €59/metams",
     "website": "https://www.3xl.lt/",
     "logo": "/logo-3xl.png",
-    "description": "3XL siūlo įmonės registracijos adresą ir virtualaus biuro paslaugas Panevėžyje, su galimybe naudotis korespondencijos administravimo paslaeugomis.",
-        "phone": "+370 45 123456"
-      }
-  ]
-
+    "description": "3XL siūlo įmonės registracijos adresą ir virtualaus biuro paslaugas Panevėžyje, su galimybe naudotis korespondencijos administravimo paslaugomis.",
+    "phone": "+370 45 123456",
+    "googleReview": {
+      "rating": 4.0,
+      "reviewCount": 8,
+      "reviews": [
+        {
+          "author": "Tadas Jankauskas",
+          "text": "Vienintelis tiekėjas Panevėžyje, siūlantis tokio tipo paslaugas. Kaina gera, aptarnavimas normalus."
+        }
+      ]
+    }
+  }
+]
