@@ -85,7 +85,7 @@ const VendorRegistrationCTA = () => {
               transition={{ duration: 0.6, delay: 0.5 }}
             >
               <a 
-                href="/registracija/tiekejai" 
+                href="/pretenduoti" 
                 className="bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium inline-flex items-center shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
               >
                 Registruotis dabar

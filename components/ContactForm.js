@@ -1,7 +1,10 @@
  import React from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/router';
 
 const ContactForm = ({ containerVariants, itemVariants }) => {
+  const router = useRouter();
+    
   return (
     <motion.section 
       className="mb-16"
@@ -39,72 +42,70 @@ const ContactForm = ({ containerVariants, itemVariants }) => {
         </motion.div>
 
         {/* Right side - contact form */}
-        <motion.div 
-          className="md:col-span-3"
-          variants={itemVariants}
-        >
-          <form className="bg-white p-6 rounded-xl shadow-md">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-              {/* Name */}
-              <div>
-                <label htmlFor="name" className="block font-medium text-gray-700 mb-2">Vardas, Pavardė</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name" 
-                  className="w-full py-2 sm:py-3 px-4 rounded-lg bg-gray-50 border-transparent focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all text-gray-800"
-                  placeholder="jūsų vardas ir pavardė" 
-                />
-              </div>
+<motion.div 
+  className="md:col-span-3"
+  variants={itemVariants}
+>
+  <form className="bg-white p-6 rounded-xl shadow-md">
+    <input
+      type="hidden"
+      name="vendorId"
+      value={router?.query?.id || ''}
+    />
 
-              {/* Email */}
-              <div>
-                <label htmlFor="email" className="block font-medium text-gray-700 mb-2">El. Paštas</label>
-                <input 
-                  type="email" 
-                  id="email" 
-                  name="email" 
-                  className="w-full py-2 sm:py-3 px-4 rounded-lg bg-gray-50 border-transparent focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all text-gray-800"
-                  placeholder="jūsų@email.lt" 
-                />
-              </div>
-            </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+      {/* Name */}
+      <div>
+        <label htmlFor="name" className="block font-medium text-gray-700 mb-2">Vardas, Pavardė</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          className="w-full py-2 sm:py-3 px-4 rounded-lg bg-gray-50 border-transparent focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all text-gray-800"
+          placeholder="jūsų vardas ir pavardė"
+        />
+      </div>
 
-            {/* Subject */}
-            <div className="mb-6">
-              <label htmlFor="subject" className="block font-medium text-gray-700 mb-2">Tema</label>
-              <input 
-                type="text" 
-                id="subject" 
-                name="subject" 
-                className="w-full py-2 sm:py-3 px-4 rounded-lg bg-gray-50 border-transparent focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all text-gray-800"
-                placeholder="Užklausos tema" 
-              />
-            </div>
+      {/* Email */}
+      <div>
+        <label htmlFor="email" className="block font-medium text-gray-700 mb-2">El. Paštas</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          className="w-full py-2 sm:py-3 px-4 rounded-lg bg-gray-50 border-transparent focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all text-gray-800"
+          placeholder="jūsų@email.lt" 
+        />
+      </div>
+    </div>
 
-            {/* Message */}
-            <div className="mb-6">
-              <label htmlFor="message" className="block font-medium text-gray-700 mb-2">Žinutė</label>
-              <textarea 
-                id="message" 
-                name="message" 
-                rows="5" 
-                className="w-full py-2 sm:py-3 px-4 rounded-lg bg-gray-50 border-transparent focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all text-gray-800"
-                placeholder="Jūsų žinutė" 
-              ></textarea>
-            </div>
+    {/* Subject */}
+<div className="mb-6">
+  <label htmlFor="subject" className="block font-medium text-gray-700 mb-2">Tema</label>
+  <input 
+    type="text" 
+    id="subject" 
+    name="subject" 
+    defaultValue={router?.query?.id ? `${router.query.id} kompanijos užklausa` : ''}
+    className="w-full py-2 sm:py-3 px-4 rounded-lg bg-gray-50 border-transparent focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all text-gray-800"
+    placeholder="Užklausos tema" 
+  />
+</div>
 
-            {/* Submit button */}
-            <div className="text-right">
-              <button 
-                type="submit" 
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 sm:py-3 px-8 rounded-lg transition-colors shadow-sm"
-              >
-                Siųsti užklausą
-              </button>
-            </div>
-          </form>
-        </motion.div>
+
+    {/* Message */}
+    <div className="mb-6">
+      <label htmlFor="message" className="block font-medium text-gray-700 mb-2">Žinutė</label>
+      <textarea 
+        id="message" 
+        name="message" 
+        rows="5" 
+        className="w-full py-2 sm:py-3 px-4 rounded-lg bg-gray-50 border-transparent focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all text-gray-800"
+        placeholder="Jūsų žinutė" 
+      ></textarea>
+    </div>
+  </form>
+</motion.div>
       </div>
     </motion.section>
   );

@@ -1,8 +1,7 @@
-// TODO: Add header component code here
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-
+import AuthModal from './AuthModal'; // Import the AuthModal component
 
 const Header = () => {
   const [language, setLanguage] = useState('lt');
@@ -12,7 +11,11 @@ const Header = () => {
   const [stickManState, setStickManState] = useState('walking'); // 'walking', 'entering', 'inside'
   const animationRef = useRef(null);
   const headerRef = useRef(null);
-  
+
+  // New state for auth modal
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState('login'); // 'login' or 'register'
+
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
@@ -28,354 +31,285 @@ const Header = () => {
     };
   }, [scrolled]);
 
-  // Animate stick man
+  // StickMan animation with requestAnimationFrame
   useEffect(() => {
-    // Start the animation after a brief delay
-    const startDelay = setTimeout(() => {
-      if (animationRef.current) return;
-      
-      // Set up animation interval
-      let position = -40; // Start off-screen to the left
-      let housePosition = 0; // Will be calculated later
-      let startTime = Date.now();
-      const speed = 3; // Pixels to move per frame
-      const animationDuration = 3000; // 3 seconds until house entry
-      
-      animationRef.current = setInterval(() => {
-        // Get header width to determine house position
-        if (headerRef.current && housePosition === 0) {
-          const headerWidth = headerRef.current.offsetWidth;
-          // Position house at 80% of header width
-          housePosition = headerWidth * 0.8;
-        }
-        
-        // Calculate how far along we are in the animation
-        const elapsedTime = Date.now() - startTime;
-        
-        // If time's up and stick man is still walking, start entering the house
-        if (elapsedTime >= animationDuration && stickManState === 'walking' && position < housePosition - 10) {
-          // If we're not close to the house yet, speed up to get there
-          position += speed * 2;
-          setStickManPosition(position);
-        } 
-        // Normal walking until we reach the house
-        else if (stickManState === 'walking' && position < housePosition - 10) {
-          position += speed;
-          setStickManPosition(position);
-        } 
-        // Entering the house
-        else if (stickManState === 'walking' && position >= housePosition - 10) {
-          setStickManState('entering');
-          
-          // Give stick man time to enter house
-          setTimeout(() => {
-            setStickManState('inside');
-            // Clear the interval as animation is done
-            if (animationRef.current) {
-              clearInterval(animationRef.current);
-              animationRef.current = null;
+    let walkingSpeed = 0.7;
+    let targetPosition = -40;
+    let frameCount = 0;
+    let frameDuration = 1000 / 60; // 60fps
+    let lastTime = 0;
+
+    const animate = (time) => {
+      if (lastTime === 0) lastTime = time;
+      const elapsed = time - lastTime;
+
+      if (elapsed > frameDuration) {
+        lastTime = time;
+
+        // Only animate if the menu is closed
+        if (!menuOpen) {
+          frameCount += 1;
+
+          // Change target position based on mouse hover
+          if (stickManState === 'walking') {
+            targetPosition = -40;
+          } else if (stickManState === 'entering') {
+            targetPosition = -15;
+          } else if (stickManState === 'inside') {
+            targetPosition = -5;
+          }
+
+          // Smoothly move stick man position toward target
+          setStickManPosition(current => {
+            if (Math.abs(current - targetPosition) < 0.5) {
+              return targetPosition;
             }
-          }, 500);
+            return current + (targetPosition - current) * 0.08;
+          });
         }
-      }, 50);
-      
-      return () => {
-        if (animationRef.current) {
-          clearInterval(animationRef.current);
-          animationRef.current = null;
-        }
-      };
-    }, 100); // Short delay to ensure component is fully mounted
-    
-    // Clean up on component unmount
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
     return () => {
-      clearTimeout(startDelay);
       if (animationRef.current) {
-        clearInterval(animationRef.current);
-        animationRef.current = null;
+        cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [stickManState]);
+  }, [menuOpen, stickManState]);
 
-  const toggleLanguage = () => {
-    setLanguage(prev => (prev === 'lt' ? 'en' : 'lt'));
-    // Add i18n logic here later
-  };
+  // Functions to open auth modal
+  const openLoginModal = () => {
+    setAuthModalTab('login');
+    setIsAuthModalOpen(true);
 
-  // Stick man animation frames
-  const stickManFrame = () => {
-    // Different rendering based on state
-    switch(stickManState) {
-      case 'entering':
-        // Entering house pose (leaning forward)
-        return (
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-600 scale-90 origin-bottom">
-            <circle cx="12" cy="6" r="4" />
-            <line x1="12" y1="10" x2="14" y2="16" />
-            <line x1="14" y1="16" x2="12" y2="20" />
-            <line x1="14" y1="16" x2="16" y2="18" />
-            <line x1="8" y1="13" x2="16" y2="13" />
-          </svg>
-        );
-      case 'inside':
-        // Inside house (hidden)
-        return null;
-      default:
-        // Regular walking poses, alternating based on position
-        return (stickManPosition / 15) % 2 === 0 ? (
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-600">
-            <circle cx="12" cy="6" r="4" />
-            <line x1="12" y1="10" x2="12" y2="16" />
-            <line x1="12" y1="16" x2="9" y2="20" />
-            <line x1="12" y1="16" x2="15" y2="20" />
-            <line x1="8" y1="14" x2="16" y2="14" />
-          </svg>
-        ) : (
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-600">
-            <circle cx="12" cy="6" r="4" />
-            <line x1="12" y1="10" x2="12" y2="16" />
-            <line x1="12" y1="16" x2="8" y2="19" />
-            <line x1="12" y1="16" x2="16" y2="19" />
-            <line x1="7" y1="13" x2="17" y2="13" />
-          </svg>
-        );
+    // Close mobile menu if open
+    if (menuOpen) {
+      setMenuOpen(false);
     }
   };
 
-  // House SVG component
-  const House = () => (
-    <div className="absolute top-1/2 right-[20%] transform -translate-y-1/3">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-blue-700">
-        {/* Roof */}
-        <path d="M3 12L12 5L21 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        {/* House body */}
-        <rect x="6" y="10" width="12" height="10" stroke="currentColor" strokeWidth="2" />
-        {/* Door */}
-        <rect x="10" y="14" width="4" height="6" stroke="currentColor" strokeWidth="1.5" />
-        {/* Window */}
-        <rect x="8" y="11" width="2" height="2" stroke="currentColor" strokeWidth="1" />
-        <rect x="14" y="11" width="2" height="2" stroke="currentColor" strokeWidth="1" />
-        
-        {/* Light from inside the house - visible when stick man is inside */}
-        {stickManState === 'inside' && (
-          <rect x="10.5" y="15" width="3" height="3" fill="#FFEB3B" stroke="none" />
-        )}
-      </svg>
-    </div>
-  );
+  const openRegisterModal = () => {
+    setAuthModalTab('register');
+    setIsAuthModalOpen(true);
+
+    // Close mobile menu if open
+    if (menuOpen) {
+      setMenuOpen(false);
+    }
+  };
 
   return (
-    <motion.header 
+    <header 
       ref={headerRef}
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ type: 'spring', stiffness: 100, damping: 15 }}
-      className={`relative top-0 left-0 right-0 z-50 transition-all duration-300 overflow-hidden ${
-        scrolled 
-          ? 'bg-white shadow-md py-2' 
-          : 'bg-gray-50/90 backdrop-blur-sm border-b border-gray-200 py-3'
+      className={`sticky top-0 z-30 w-full transition-all duration-300 ${
+        scrolled ? 'bg-white shadow-md py-2' : 'bg-white/95 py-3'
       }`}
     >
-      {/* House */}
-      <House />
-      
-      {/* Stick Man Animation */}
-      <div 
-        className="absolute top-1/2 transform -translate-y-1/2 transition-none"
-        style={{ 
-          left: `${stickManPosition}px`,
-          opacity: stickManState === 'inside' ? 0 : 1,
-          transition: stickManState === 'entering' ? 'opacity 0.5s' : 'none'
-        }}
-      >
-        {stickManFrame()}
-      </div>
-      
-      <div className="max-w-6xl mx-auto px-4 flex items-center justify-between relative">
-        {/* Logo + Brand */}
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <motion.div 
-              whileHover={{ rotate: 10 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-between items-center">
+        {/* Logo */}
+        <Link href="/">
+          <div className="relative flex items-center cursor-pointer">
+            {/* StickMan Animation */}
+            <div 
+              className="absolute right-[-10px] bottom-[-2px] h-10 w-10 overflow-visible"
+              onMouseEnter={() => setStickManState('entering')}
+              onMouseLeave={() => setStickManState('walking')}
             >
-              <img
-                src="/logo.png"
-                alt="Verslų Daigyno logotipas"
-                className="w-10 h-10 object-contain rounded-md border border-gray-100 shadow-sm group-hover:shadow-md transition-all"
-              />
-            </motion.div>
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white hidden sm:block"></div>
+              <div 
+                className="absolute bottom-0"
+                style={{ 
+                  transform: `translateX(${stickManPosition}px)`,
+                  transition: 'transform 0.1s ease-out'
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" className="text-blue-700">
+                  <circle cx="12" cy="4" r="4" fill="currentColor" />
+                  <path
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    d="M12 8v8m-4-4h8m-8 8l4-8m4 8l-4-8"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {/* Logo Text */}
+            <div className="flex flex-col">
+              <span className="text-blue-700 font-bold text-lg sm:text-xl leading-none">
+                Verslo Daigynas
+              </span>
+              <span className="text-gray-500 text-xs sm:text-sm leading-tight">
+                Verslo adresÅ³ platforma
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="font-bold text-gray-800 text-lg">Verslo Daigynas</span>
-            <span className="hidden sm:block text-xs text-blue-600 font-medium">Jūsų verslo partneris</span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          <nav className="flex items-center space-x-6">
+            <Link 
+              href="/" 
+              className="text-gray-800 hover:text-blue-600 font-medium transition-colors"
+            >
+              Pagrindinis
+            </Link>
+            <Link 
+              href="/paslaugos" 
+              className="text-gray-800 hover:text-blue-600 font-medium transition-colors"
+            >
+              Paslaugos
+            </Link>
+            <Link 
+              href="/apie-mus" 
+              className="text-gray-800 hover:text-blue-600 font-medium transition-colors"
+            >
+              Apie mus
+            </Link>
+            <Link 
+              href="/duk" 
+              className="text-gray-800 hover:text-blue-600 font-medium transition-colors"
+            >
+              DUK
+            </Link>
+            <Link 
+              href="/kontaktai" 
+              className="text-gray-800 hover:text-blue-600 font-medium transition-colors"
+            >
+              Kontaktai
+            </Link>
+          </nav>
+
+          <div className="flex items-center space-x-4">
+            {/* Language Switcher */}
+            <div className="relative">
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="appearance-none bg-transparent pl-2 pr-8 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500"
+              >
+                <option value="lt">LT</option>
+                <option value="en">EN</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Auth Button - NEW */}
+            <button 
+              onClick={openLoginModal}
+              className="text-blue-600 hover:text-blue-800 border border-blue-600 hover:border-blue-800 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+            >
+              Prisijungti / Registruotis
+            </button>
           </div>
         </div>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-8">
-          <nav>
-            <ul className="flex items-center space-x-6">
-              <li>
-                <a 
-                  href="/index" 
-                  className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors relative group"
-                >
-                  Pradžia
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="/apie-mus"
-                  className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors relative group"
-                >
-                  Apie mus
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="/verslo-naujienos"
-                  className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors relative group"
-                >
-                  Verslo naujienos
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="/kontaktai" 
-                  className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors relative group"
-                >
-                  Kontaktai
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
-                </a>
-              </li>
-            </ul>
-          </nav>
-          
-          {/* Language Toggle */}
-          <motion.button
-            onClick={toggleLanguage}
-            whileTap={{ scale: 0.95 }}
-            className={`px-3 py-1 text-sm rounded-md flex items-center gap-1.5 font-medium transition-all ${
-              language === 'lt' 
-                ? 'bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100' 
-                : 'bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100'
-            }`}
-            aria-label="Perjungti kalbą"
-          >
-            <span className="hidden sm:inline">{language === 'lt' ? 'English' : 'Lietuvių'}</span>
-            <span className="sm:hidden">{language === 'lt' ? 'EN' : 'LT'}</span>
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </motion.button>
-        </div>
-        
         {/* Mobile Menu Button */}
-        <div className="md:hidden">
-          <button 
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-          >
-            <svg 
-              className="w-6 h-6" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24" 
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {menuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
-              )}
+        <button
+          className="md:hidden text-gray-700"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle menu"
+        >
+          {menuOpen ? (
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
-        </div>
+          ) : (
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
       </div>
-      
-      {/* Mobile Menu */}
+
+      {/* Mobile Navigation Dropdown */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden bg-white border-t border-gray-100"
+            className="md:hidden bg-white border-t"
           >
-            <div className="px-4 py-3 space-y-3">
-              <nav>
-                <ul className="space-y-3 py-2">
-                  <li>
-                    <a 
-                      href="#" 
-                      className="block px-2 py-1.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      Pradžia
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="#about" 
-                      className="block px-2 py-1.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      Apie mus
-                    </a>
-                  </li>
-                  <li>
-                <a 
-                  href="/verslo-naujienos"
-                  className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors relative group"
+            <div className="max-w-6xl mx-auto px-4 py-3">
+              <nav className="flex flex-col space-y-3">
+                <Link
+                  href="/"
+                  className="text-gray-800 hover:text-blue-600 font-medium py-2 transition-colors"
+                  onClick={() => setMenuOpen(false)}
                 >
-                  Verslo naujienos
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
-                </a>
-              </li>
-                  <li>
-                    <a 
-                      href="#contact" 
-                      className="block px-2 py-1.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      Kontaktai
-                    </a>
-                  </li>
-                </ul>
-              </nav>
-              
-              <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-                <span className="text-xs text-gray-500">Verslo Daigynas © 2023</span>
-                
-                {/* Mobile Language Toggle */}
+                  Pagrindinis
+                </Link>
+                <Link
+                  href="/paslaugos"
+                  className="text-gray-800 hover:text-blue-600 font-medium py-2 transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Paslaugos
+                </Link>
+                <Link
+                  href="/apie-mus"
+                  className="text-gray-800 hover:text-blue-600 font-medium py-2 transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Apie mus
+                </Link>
+                <Link
+                  href="/duk"
+                  className="text-gray-800 hover:text-blue-600 font-medium py-2 transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  DUK
+                </Link>
+                <Link
+                  href="/kontaktai"
+                  className="text-gray-800 hover:text-blue-600 font-medium py-2 transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Kontaktai
+                </Link>
+
+                {/* Auth Option in Mobile Menu - NEW */}
                 <button
-                  onClick={toggleLanguage}
-                  className={`px-3 py-1 text-sm rounded-md font-medium ${
-                    language === 'lt' 
-                      ? 'bg-blue-50 text-blue-700' 
-                      : 'bg-indigo-50 text-indigo-700'
-                  }`}
-                  aria-label="Perjungti kalbą"
+                  onClick={openLoginModal}
+                  className="text-blue-600 hover:text-blue-800 font-medium py-2 text-left transition-colors"
                 >
-                  {language === 'lt' ? 'EN' : 'LT'}
+                  Prisijungti / Registruotis
                 </button>
-              </div>
+
+                <div className="py-2">
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="appearance-none bg-transparent pl-2 pr-8 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="lt">LietuviÅ³</option>
+                    <option value="en">English</option>
+                  </select>
+                </div>
+              </nav>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-      
-      {/* Add some space after the header to account for fixed positioning */}
-      <div className="h-16" /> 
-    </motion.header>
+
+      {/* Auth Modal Integration - NEW */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        initialTab={authModalTab} 
+      />
+    </header>
   );
 };
 
