@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Head from 'next/head';
 import Header from '../components/Header';
@@ -7,6 +7,9 @@ import SimpleVendorCTA from '../components/SimpleVendorCTA';
 import ContentHighlightDivider from '../components/ContentHighLightDivider';
 
 export default function AboutUs() {
+
+  
+  
   // Company history timeline
   const historyTimeline = [
     {
@@ -236,6 +239,7 @@ export default function AboutUs() {
 
         {/* CTA Section */}
         <SimpleVendorCTA />
+        
 
         {/* Team Section */}
         <section className="py-16 px-4">

@@ -1,79 +1,300 @@
-import React from 'react';
+// pages/tiekejai/[id].js
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
-import vendors from '../../data/vendors.json';
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, getDocs, doc, getDoc } from "firebase/firestore";
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import VendorRegistrationCTA from '../../components/VendorRegistrationCTA';
 import ContentHighlightDivider from '../../components/ContentHighLightDivider';
+import FavoriteHeart from '../../components/Users/FavoriteHeart';
+import TeamProfiles from '../../components/Users/TeamProfiles';
+
+
+
+// Firebase initialization
+const firebaseConfig = {
+  apiKey: "AIzaSyDh1UzH616RKW5kNs35rAZogLofmTCQefI",
+  authDomain: "verslo-daigynas.firebaseapp.com",
+  projectId: "verslo-daigynas",
+  storageBucket: "verslo-daigynas.firebasestorage.app",
+  messagingSenderId: "972798978146",
+  appId: "1:972798978146:web:1d2e8191f5f79ef010493b",
+  measurementId: "G-6HQLW76K5C"
+};
+
+// Helper function to generate URL-friendly vendor slug
+const generateVendorSlug = (name) => {
+  if (!name) return '';
+  return name.toLowerCase().replace(/\s+/g, '-');
+};
+
+let app = null;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (error) {
+  if (!/already exists/.test(error.message)) {
+    console.error("Firebase initialization error", error.stack);
+  }
+}
+
+const db = getFirestore();
+
+
+// Trust Badge Component
+const TrustBadge = ({ verificationLevel, trustScore }) => {
+  // Badge styles based on verification level
+  const badgeStyle = {
+    premium: {
+      bgColor: 'bg-gradient-to-r from-blue-500 to-purple-500',
+      textColor: 'text-white',
+      icon: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+      ),
+      label: 'Premium Verified'
+    },
+    enhanced: {
+      bgColor: 'bg-blue-500',
+      textColor: 'text-white',
+      icon: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+      ),
+      label: 'Enhanced Verification'
+    },
+    standard: {
+      bgColor: 'bg-green-500',
+      textColor: 'text-white',
+      icon: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+      ),
+      label: 'Verified Business'
+    },
+    none: {
+      bgColor: 'bg-gray-200',
+      textColor: 'text-gray-600',
+      icon: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+        </svg>
+      ),
+      label: 'Listing Unverified'
+    }
+  };
+  
+  const badge = badgeStyle[verificationLevel] || badgeStyle.none;
+
+  
+  
+  return (
+    <div className={`inline-flex items-center px-3 py-1 rounded-full ${badge.bgColor} ${badge.textColor} text-sm font-medium`}>
+      {badge.icon}
+      <span className="ml-1">{badge.label}</span>
+      {trustScore && (
+        <span className="ml-2 pl-2 border-l border-white border-opacity-30">
+          {trustScore}% Trust
+        </span>
+      )}
+    </div>
+  );
+};
+
+// Business Status Component
+const BusinessStatusIndicator = ({ businessHours }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  
+  useEffect(() => {
+    if (!businessHours) {
+      setStatusMessage('Darbo laikas nenustatytas');
+      return;
+    }
+    
+    // Calculate if business is currently open
+    const now = new Date();
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const today = dayNames[now.getDay()];
+    
+    // Convert current time to HH:MM format
+    const currentTime = now.toTimeString().substring(0, 5);
+    
+    // Get today's hours
+    const todayHours = businessHours[today];
+    
+    if (!todayHours) {
+      setIsOpen(false);
+      setStatusMessage('Šiandien uždaryta');
+      return;
+    }
+    
+    if (todayHours.isClosed) {
+      setIsOpen(false);
+      setStatusMessage('Šiandien uždaryta');
+    } else if (todayHours.isOpen24Hours) {
+      setIsOpen(true);
+      setStatusMessage('Atidaryta visą parą');
+    } else if (todayHours.open && todayHours.close) {
+      // Check if current time is between open and close times
+      if (currentTime >= todayHours.open && currentTime < todayHours.close) {
+        setIsOpen(true);
+        setStatusMessage(`Atidaryta iki ${todayHours.close}`);
+      } else {
+        setIsOpen(false);
+        if (currentTime < todayHours.open) {
+          setStatusMessage(`Atidarys ${todayHours.open}`);
+        } else {
+          setStatusMessage(`Uždaryta, atsidarys rytoj ${businessHours[dayNames[(now.getDay() + 1) % 7]]?.open || ''}`);
+        }
+      }
+    }
+  }, [businessHours]);
+  
+  if (!businessHours) return null;
+  
+  return (
+    <div className={`flex items-center ${isOpen ? 'text-green-600' : 'text-red-500'}`}>
+      <div className={`h-3 w-3 rounded-full ${isOpen ? 'bg-green-500' : 'bg-red-500'} mr-2`}></div>
+      <span className="text-sm font-medium">{statusMessage}</span>
+    </div>
+  );
+};
+
+// Compliance Badge Component
+const ComplianceBadge = ({ type }) => {
+  const badgeInfo = {
+    GDPR_compliant: {
+      name: 'GDPR Compliant',
+      icon: 'shield-check',
+      color: 'bg-blue-100 text-blue-800',
+      description: 'This business complies with EU General Data Protection Regulation'
+    },
+    ISO_27001: {
+      name: 'ISO 27001',
+      icon: 'badge-check',
+      color: 'bg-indigo-100 text-indigo-800',
+      description: 'Certified for information security management'
+    },
+    sustainable: {
+      name: 'Eco Friendly',
+      icon: 'leaf',
+      color: 'bg-green-100 text-green-800',
+      description: 'Uses sustainable practices'
+    }
+  };
+  
+  const badge = badgeInfo[type];
+  if (!badge) return null;
+  
+  return (
+    <div className={`inline-flex items-center px-2 py-1 rounded ${badge.color} text-xs font-medium`} title={badge.description}>
+      <span>{badge.name}</span>
+    </div>
+  );
+};
+
+
 
 export default function VendorProfile() {
   const router = useRouter();
   const { id } = router.query;
+  const [vendor, setVendor] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  // Find the vendor by normalized name/slug
-  const vendor = vendors.find(v => v.name.toLowerCase().replace(/\s+/g, '-') === id);
+  useEffect(() => {
+    const fetchVendorData = async () => {
+      if (!id) return; // Wait until id is available from router
 
-  // Handle loading state and not found case
-  if (router.isFallback || !vendor) {
+      try {
+        setLoading(true);
+        
+        // First try to fetch by direct ID (in case it's a Firebase document ID)
+        try {
+          const vendorDoc = await getDoc(doc(db, "vendors", id));
+          if (vendorDoc.exists()) {
+            const vendorData = vendorDoc.data();
+            setVendor({ id: vendorDoc.id, ...vendorData });
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          // This is fine, it means the ID isn't a direct document ID
+          console.log("Not a direct document ID, continuing search...");
+        }
+        
+        // Query vendors collection to find the vendor with matching normalized name
+        const vendorsRef = collection(db, "vendors");
+        const querySnapshot = await getDocs(vendorsRef);
+        
+        let foundVendor = null;
+        querySnapshot.forEach((doc) => {
+          const vendorData = doc.data();
+          // Normalize vendor name to match URL slug format
+          const normalizedName = generateVendorSlug(vendorData.name);
+          
+          if (normalizedName === id) {
+            foundVendor = { id: doc.id, ...vendorData };
+          }
+        });
+        
+        if (foundVendor) {
+          setVendor(foundVendor);
+          setLoading(false);
+        } else {
+          setNotFound(true);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error fetching vendor data:", error);
+        setLoading(false);
+        setNotFound(true);
+      }
+    };
+
+    if (id) {
+      fetchVendorData();
+    }
+  }, [id]);
+
+  // Handle loading state
+  if (router.isFallback || loading) {
     return (
       <>
         <Header />
         <div className="max-w-6xl mx-auto px-6 py-12 text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">
-            {router.isFallback ? 'Kraunama...' : 'Tiekėjas nerastas'}
-          </h1>
-          {!router.isFallback && (
-            <button 
-              onClick={() => router.push('/')} 
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-            >
-              Grįžti į pradžią
-            </button>
-          )}
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold mb-4">Kraunama...</h2>
+          <p>Prašome palaukti, kol gausime įmonės informaciją.</p>
         </div>
         <Footer />
       </>
     );
   }
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { type: "spring", stiffness: 100, damping: 10 }
-    }
-  };
-
-  // Function to render star ratings
-  const renderStars = (rating) => {
+  // Handle not found case
+  if (notFound || !vendor) {
     return (
-      <div className="flex">
-        {[...Array(5)].map((_, i) => (
-          <svg 
-            key={i} 
-            className={`w-5 h-5 ${i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300'}`} 
-            fill="currentColor" 
-            viewBox="0 0 20 20"
+      <>
+        <Header />
+        <div className="max-w-6xl mx-auto px-6 py-12 text-center">
+          <h2 className="text-2xl font-bold mb-4">Įmonė nerasta</h2>
+          <p className="mb-8">Nepavyko rasti ieškamos įmonės.</p>
+          <button 
+            onClick={() => router.push('/tiekejai')}
+            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
           >
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-        ))}
-      </div>
+            Grįžti į katalogą
+          </button>
+        </div>
+        <Footer />
+      </>
     );
   }
 
@@ -81,299 +302,427 @@ export default function VendorProfile() {
     <>
       <Head>
         <title>{vendor.name} - Verslo Daigynas</title>
-        <meta name="description" content={`${vendor.name} - ${vendor.services.join(', ')}. ${vendor.description.substring(0, 120)}...`} />
+        <meta name="description" content={vendor.description} />
       </Head>
-
+      
       <Header />
       
-      {/* Hero Banner with gradient overlay */}
-      <div className="relative w-full overflow-hidden mb-6">
-        <div className="relative">
-          <img
-            src={vendor.bannerImage || "/vendor-banner.jpg"} // Use vendor banner if available or fallback
-            alt={`${vendor.name} banner`}
-            className="w-full h-[300px] sm:h-[350px] md:h-[400px] object-cover z-0 relative"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-blue-600/40 z-10 pointer-events-none"></div>
-        </div>
-
-        {/* Hero content with vendor name */}
-        <div className="absolute inset-0 flex flex-col justify-center items-center px-4 sm:px-6 py-8 text-white z-20">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.7 }}
-            className="text-center max-w-3xl w-full"
-          >
-            <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4 drop-shadow-md">
-              {vendor.name}
-            </h1>
-            <p className="text-base md:text-xl opacity-90 max-w-2xl mx-auto mb-4 sm:mb-8 drop-shadow">
-              {vendor.city} • {vendor.services.join(', ')}
-            </p>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* "Claim Your Listing" Banner */}
-        <motion.div
-          className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 mb-8 relative overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Decorative circles */}
-          <div className="absolute -top-6 -left-6 w-24 h-24 rounded-full bg-white opacity-10"></div>
-          <div className="absolute -bottom-10 right-10 w-32 h-32 rounded-full bg-white opacity-10"></div>
-          
-          <div className="flex flex-col md:flex-row items-center justify-between relative z-10">
-            <div className="mb-4 md:mb-0 md:mr-6">
-              <h3 className="text-xl font-bold text-white mb-2">Ar jūs esate šios įmonės atstovas?</h3>
-              <p className="text-blue-100">Pretenduokite į šį įrašą, kad galėtumėte valdyti įmonės informaciją</p>
-            </div>
-            <motion.a
-              href={`/pretenduoti?id=${vendor.id}`}
-              className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium shadow-sm flex items-center whitespace-nowrap flex-shrink-0"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
+      <main>
+        <div className="vendor-hero bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+          <div className="max-w-6xl mx-auto px-6 py-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              Pretenduoti į įrašą
-            </motion.a>
-          </div>
-        </motion.div>
-
-        {/* Logo and Basic Info Section */}
-        <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Left column with logo */}
-          <motion.div 
-            className="lg:col-span-4"
-            variants={itemVariants}
-          >
-            <div className="bg-white p-6 rounded-xl shadow-md flex flex-col items-center">
-              <img
-                src={vendor.logo || '/logo.png'}
-                alt={`${vendor.name} logo`}
-                className="w-full max-w-xs object-contain h-48 mb-6"
-              />
-              
-              {/* Website Button */}
-              <motion.a
-                href={vendor.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center w-full"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                aria-label={`Visit ${vendor.name}'s website`}
-              >
-                <span className="relative z-10 flex items-center">
-                  Apsilankyti svetainėje
-                  <svg className="w-4 h-4 ml-2 transform transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </span>
-              </motion.a>
-            </div>
-            
-            {/* Contact Information Card */}
-            <motion.div 
-              className="bg-white p-6 rounded-xl shadow-md mt-6"
-              variants={itemVariants}
-            >
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                Kontaktai
-              </h3>
-              
-              <div className="space-y-3">
-                <div className="flex items-center text-gray-700">
-                  <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  <a href={`mailto:${vendor.email}`} className="text-blue-600 hover:underline">
-                    {vendor.email}
-                  </a>
-                </div>
+              <div className="flex justify-between items-start">
+                <h1 className="text-4xl md:text-5xl font-bold mb-2">{vendor.name}</h1>
                 
-                <div className="flex items-center text-gray-700">
-                  <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  <a href={`tel:${vendor.phone}`} className="text-blue-600 hover:underline">
-                    {vendor.phone}
-                  </a>
-                </div>
-                
-                <div className="flex items-center text-gray-700">
-                  <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span>{vendor.city}</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Google Reviews Summary */}
-            {vendor.googleReview && (
-              <motion.div 
-                className="bg-white p-6 rounded-xl shadow-md mt-6"
-                variants={itemVariants}
-              >
-                <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  Google įvertinimas
-                </h3>
-                
-                <div className="flex items-center mb-2">
-                  {renderStars(vendor.googleReview.rating)}
-                  <span className="ml-2 font-semibold text-gray-800">
-                    {vendor.googleReview.rating.toFixed(1)}
-                  </span>
-                </div>
-                
-                <p className="text-gray-600 text-sm mb-2">
-                  Pagrįsta {vendor.googleReview.reviewCount} atsiliepimais
-                </p>
-              </motion.div>
-            )}
-          </motion.div>
-          
-          {/* Right column with description and services */}
-          <motion.div 
-            className="lg:col-span-8"
-            variants={itemVariants}
-          >
-            <div className="bg-white p-6 md:p-8 rounded-xl shadow-md">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6 pb-3 border-b border-gray-100">Apie {vendor.name}</h2>
-              <div className="prose prose-blue max-w-none text-gray-700 mb-8">
-                <p>{vendor.description}</p>
+                {/* Favorite button */}
+                {vendor.name && (
+                  <FavoriteHeart 
+                    vendorName={vendor.name} 
+                    size="large" 
+                    className="text-white hover:text-red-500" 
+                  />
+                )}
               </div>
               
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Teikiamos paslaugos</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
-                {vendor.services.map((service, i) => (
-                  <div key={i} className="flex items-center text-gray-700">
-                    <svg className="w-5 h-5 mr-2 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{service}</span>
-                  </div>
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                {/* Verification Badge */}
+                <TrustBadge 
+                  verificationLevel={vendor.verificationLevel || 'none'} 
+                  trustScore={vendor.trustMetrics?.overallScore}
+                />
+                
+                {/* Business hours status */}
+                {vendor.businessHours && (
+                  <BusinessStatusIndicator businessHours={vendor.businessHours} />
+                )}
+                
+                {/* Compliance badges */}
+                {vendor.complianceBadges?.map((badge, index) => (
+                  <ComplianceBadge key={index} type={badge.type} />
                 ))}
               </div>
               
-              {vendor.price && (
-                <>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Kainodara</h3>
-                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-8">
-                    <p className="text-gray-700">{vendor.price}</p>
-                  </div>
-                </>
-              )}
-            </div>
-          </motion.div>
-        </motion.div>
-        
-        {/* Google Reviews Section */}
-        {vendor.googleReview && vendor.googleReview.reviews && vendor.googleReview.reviews.length > 0 && (
-          <motion.section 
-            className="mb-16"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            viewport={{ once: true }}
-          >
-            <motion.h2 
-              className="text-3xl font-bold text-gray-800 mb-8 text-center"
-              variants={itemVariants}
-            >
-              Atsiliepimai
-            </motion.h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {vendor.googleReview.reviews.map((review, index) => (
-                <motion.div 
-                  key={index}
-                  className="bg-white p-6 rounded-xl shadow-md"
-                  variants={itemVariants}
+              <p className="text-xl opacity-90 max-w-3xl">{vendor.description}</p>
+              
+              <div className="mt-8">
+                {vendor.website && (
+                  <a 
+                    href={vendor.website} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-block bg-white text-blue-600 px-6 py-3 rounded-md font-medium hover:bg-opacity-90 transition-all mr-4"
+                  >
+                    Apsilankyti svetainėje
+                  </a>
+                )}
+                
+                <a 
+                  href={`mailto:${vendor.email}`}
+                  className="inline-block bg-transparent border-2 border-white text-white px-6 py-[10px] rounded-md font-medium hover:bg-white hover:bg-opacity-10 transition-all"
                 >
-                  <div className="flex mb-3">
-                    {renderStars(review.rating)}
-                  </div>
-                  <p className="text-gray-600 italic mb-4">"{review.text}"</p>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-700">- {review.author}</span>
-                    {review.date && <span className="text-sm text-gray-500">{review.date}</span>}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.section>
-        )}
-        
-        {/* Back to vendors button */}
-        <div className="text-center mt-12 mb-8">
-          <motion.a
-            href="/"
-            className="inline-block border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-2 px-6 rounded-lg transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <span className="flex items-center">
-              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Grįžti į sąrašą
-            </span>
-          </motion.a>
+                  Susisiekti
+                </a>
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </div>
+        
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Company Details */}
+            <div className="md:col-span-2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="bg-white rounded-xl shadow-md p-6 mb-8"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-2xl font-bold mb-4">Apie {vendor.name}</h2>
+                  
+                  {/* Trust Score visualization if available */}
+                  {vendor.trustMetrics?.overallScore && (
+                    <div className="flex items-center">
+                      <div className="text-sm text-gray-500 mr-2">Pasitikėjimo reitingas:</div>
+                      <div className="w-20 h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full" 
+                          style={{ width: `${vendor.trustMetrics.overallScore}%` }}
+                        ></div>
+                      </div>
+                      <div className="ml-2 text-sm font-medium">{vendor.trustMetrics.overallScore}%</div>
+                    </div>
+                  )}
+                </div>
+                
+                <p className="text-gray-700 mb-6">{vendor.description}</p>
+                
+                {/* Verification details */}
+                {vendor.verificationLevel && vendor.verificationLevel !== 'none' && (
+                  <div className="mb-6 bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-blue-800 mb-2">Patikrinta informacija</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {vendor.verificationStatus?.email?.verified && (
+                        <div className="flex items-center">
+                          <svg className="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                          <span>Patikrintas el. paštas</span>
+                        </div>
+                      )}
+                      
+                      {vendor.verificationStatus?.phone?.verified && (
+                        <div className="flex items-center">
+                          <svg className="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                          <span>Patikrintas telefono numeris</span>
+                        </div>
+                      )}
+                      
+                      {vendor.verificationStatus?.address?.verified && (
+                        <div className="flex items-center">
+                          <svg className="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                          <span>Patikrintas adresas</span>
+                        </div>
+                      )}
+                      
+                      {vendor.verificationStatus?.documents?.verified && (
+                        <div className="flex items-center">
+                          <svg className="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                          <span>Patikrinta verslo registracija</span>
+                        </div>
+                      )}
+                      
+                      {vendor.verificationStatus?.physicalAudit?.verified && (
+                        <div className="flex items-center">
+                          <svg className="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                          <span>Asmeninė apžiūra atlikta</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {vendor.verificationLevel === 'premium' && (
+                      <div className="mt-3 text-sm text-blue-700">
+                        Šiam verslo subjektui suteiktas aukščiausias patikimumo lygis, nes jis atitinka visus patikros kriterijus.
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {vendor.services && vendor.services.length > 0 && (
+                  <>
+                    <h3 className="text-xl font-semibold mb-3">Paslaugos</h3>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
+                      {vendor.services.map((service, index) => (
+                        <li key={index} className="flex items-center">
+                          <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          {service}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                
+                {vendor.price && (
+                  <>
+                    <h3 className="text-xl font-semibold mb-3">Kainodara</h3>
+                    <p className="text-gray-700 mb-6">{vendor.price}</p>
+                  </>
+                )}
+                
+                {/* Business hours if available */}
+                {vendor.businessHours && (
+                  <>
+                    <h3 className="text-xl font-semibold mb-3">Darbo laikas</h3>
+                    <div className="grid grid-cols-2 gap-2 mb-6">
+                      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                        const dayHours = vendor.businessHours[day];
+                        if (!dayHours) return null;
+                        
+                        const dayNames = {
+                          monday: 'Pirmadienis',
+                          tuesday: 'Antradienis',
+                          wednesday: 'Trečiadienis',
+                          thursday: 'Ketvirtadienis',
+                          friday: 'Penktadienis',
+                          saturday: 'Šeštadienis',
+                          sunday: 'Sekmadienis'
+                        };
+                        
+                        return (
+                          <div key={day} className="flex justify-between">
+                            <span className="font-medium">{dayNames[day]}:</span>
+                            <span>
+                              {dayHours.isClosed && 'Uždaryta'}
+                              {dayHours.isOpen24Hours && 'Atidaryta visą parą'}
+                              {!dayHours.isClosed && !dayHours.isOpen24Hours && `${dayHours.open} - ${dayHours.close}`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </motion.div>
+              
+              <ContentHighlightDivider />
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="bg-white rounded-xl shadow-md p-6 mb-8"
+              >
+                <h2 className="text-2xl font-bold mb-4">Kodėl rinktis mus</h2>
+                <div className="prose max-w-none text-gray-700">
+                  <p>
+                    {vendor.whyChooseUs || `Turime ilgametę patirtį ir esame įsipareigoję teikti aukščiausios kokybės paslaugas, pritaikytas konkretiems jūsų verslo poreikiams. Mūsų ekspertų komanda pasirengusi padėti jūsų verslui sėkmingai vystytis.`}
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+            
+            {/* Contact Information */}
+            <div className="md:col-span-1">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="bg-white rounded-xl shadow-md p-6 sticky top-8"
+              >
+                <div className="flex items-center justify-center mb-6">
+                  {vendor.logo ? (
+                    <img 
+                      src={vendor.logo} 
+                      alt={`${vendor.name} logo`} 
+                      className="w-32 h-32 object-contain"
+                    />
+                  ) : (
+                    <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-3xl font-bold text-blue-400">
+                        {vendor.name.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                <h3 className="text-xl font-semibold mb-4">Kontaktinė informacija</h3>
+                
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-blue-500 mt-1 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className="font-medium text-gray-900">Vieta</p>
+                      <p className="text-gray-600">{vendor.city || "Vieta nenurodyta"}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-blue-500 mt-1 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                    </svg>
+                    <div>
+                      <p className="font-medium text-gray-900">El. paštas</p>
+                      <a href={`mailto:${vendor.email}`} className="text-blue-600 hover:underline">
+                        {vendor.email}
+                      </a>
+                    </div>
+                  </div>
+                  
+                  {vendor.phone && (
+                    <div className="flex items-start">
+                      <svg className="w-5 h-5 text-blue-500 mt-1 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                      </svg>
+                      <div>
+                        <p className="font-medium text-gray-900">Telefono numeris</p>
+                        <a href={`tel:${vendor.phone}`} className="text-blue-600 hover:underline">
+                          {vendor.phone}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {vendor.website && (
+                    <div className="flex items-start">
+                      <svg className="w-5 h-5 text-blue-500 mt-1 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <p className="font-medium text-gray-900">Svetainė</p>
+                        <a 
+                          href={vendor.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-blue-600 hover:underline"
+                        >
+                          Apsilankyti svetainėje
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Trust metrics */}
+                {vendor.trustMetrics && (
+                  <div className="border-t border-gray-200 pt-4 mb-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Patikimumo metrikos</h4>
+                    
+                    {vendor.trustMetrics.responseRate && (
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600">Atsakymo dažnis</span>
+                        <span className="text-sm font-medium">{vendor.trustMetrics.responseRate}%</span>
+                      </div>
+                    )}
+                    
+                    {vendor.trustMetrics.responseTime !== undefined && (
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600">Vid. atsakymo laikas</span>
+                        <span className="text-sm font-medium">{vendor.trustMetrics.responseTime} val.</span>
+                      </div>
+                    )}
+                    
+                    {vendor.trustMetrics.yearsInBusiness && (
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600">Veiklos metai</span>
+                        <span className="text-sm font-medium">{vendor.trustMetrics.yearsInBusiness}</span>
+                      </div>
+                    )}
+                    
+                    {vendor.trustMetrics.reviewScore && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Įvertinimas</span>
+                        <span className="text-sm font-medium">{vendor.trustMetrics.reviewScore}/5</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Compliance badges section */}
+                {vendor.complianceBadges && vendor.complianceBadges.length > 0 && (
+                  <div className="border-t border-gray-200 pt-4 mb-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Atitikties sertifikatai</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {vendor.complianceBadges.map((badge, index) => (
+                        <ComplianceBadge key={index} type={badge.type} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="pt-4 border-t border-gray-200">
+                  <button 
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                    onClick={() => window.location.href = `mailto:${vendor.email}`}
+                  >
+                    Susisiekti dabar
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+
+                       {/* Add the Team Profiles section here - before the similar vendors and after main vendor info */}
+      {vendor && vendor.team && vendor.team.length > 0 && (
+        <section className="my-16">
+          <div className="container mx-auto">
+            <ContentHighlightDivider 
+              title="Komanda" 
+              text="Susipažinkite su profesionalais, kurie teikia mūsų paslaugas"
+              align="center"
+            />
+            <div className="mt-8">
+              <TeamProfiles teamMembers={vendor.team} />
+            </div>
+          </div>
+        </section>
+      )}
+        
+        <VendorRegistrationCTA />
+      </main>
       
-      <VendorRegistrationCTA />
-
-      <ContentHighlightDivider />
-
       <Footer />
+      
+      <style jsx global>{`
+        .vendor-hero {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .vendor-hero::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-image: url('/patterns/dots.svg');
+          opacity: 0.1;
+          z-index: 1;
+        }
+        
+        .vendor-hero > div {
+          position: relative;
+          z-index: 2;
+        }
+      `}</style>
     </>
   );
-}
-
-export async function getStaticPaths() {
-  // Generate paths for all vendors
-  const paths = vendors.map(vendor => ({
-    params: { id: vendor.name.toLowerCase().replace(/\s+/g, '-') }
-  }));
-  
-  return { paths, fallback: true };
-}
-
-export async function getStaticProps({ params }) {
-  // Find the vendor data
-  const vendor = vendors.find(v => v.name.toLowerCase().replace(/\s+/g, '-') === params.id);
-  
-  // If vendor not found, return 404
-  if (!vendor) {
-    return { notFound: true };
-  }
-  
-  return {
-    props: { vendor },
-    // Re-generate the page at most once per day
-    revalidate: 86400,
-  };
 }

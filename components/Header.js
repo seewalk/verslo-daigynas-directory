@@ -1,7 +1,26 @@
+// components/Header.js
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import AuthModal from './AuthModal'; // Import the AuthModal component
+import AuthModal from './AuthModal';
+import HeaderMenu from './Users/HeaderMenu'; // Import the HeaderMenu component
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth"; // Add signOut to imports
+import { initializeApp } from "firebase/app";
+
+// Firebase initialization
+const firebaseConfig = {
+  apiKey: "AIzaSyDh1UzH616RKW5kNs35rAZogLofmTCQefI",
+  authDomain: "verslo-daigynas.firebaseapp.com",
+  projectId: "verslo-daigynas",
+  storageBucket: "verslo-daigynas.firebasestorage.app",
+  messagingSenderId: "972798978146",
+  appId: "1:972798978146:web:1d2e8191f5f79ef010493b",
+  measurementId: "G-6HQLW76K5C"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 const Header = () => {
   const [language, setLanguage] = useState('lt');
@@ -11,303 +30,293 @@ const Header = () => {
   const [stickManState, setStickManState] = useState('walking'); // 'walking', 'entering', 'inside'
   const animationRef = useRef(null);
   const headerRef = useRef(null);
-
-  // New state for auth modal
+  
+  // New state for auth modal and authentication
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState('login'); // 'login' or 'register'
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // Check authentication state on component mount
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+    });
+    
+    return () => unsubscribe();
+  }, []);
 
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      const isScrolled = window.scrollY > 10;
-      if (isScrolled !== scrolled) {
-        setScrolled(isScrolled);
+      if (window.scrollY > 10) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
       }
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [scrolled]);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-  // StickMan animation with requestAnimationFrame
+  // Animation for stick man
   useEffect(() => {
-    let walkingSpeed = 0.7;
-    let targetPosition = -40;
-    let frameCount = 0;
-    let frameDuration = 1000 / 60; // 60fps
-    let lastTime = 0;
+    let animationFrame;
+    let startTime;
 
-    const animate = (time) => {
-      if (lastTime === 0) lastTime = time;
-      const elapsed = time - lastTime;
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
 
-      if (elapsed > frameDuration) {
-        lastTime = time;
-
-        // Only animate if the menu is closed
-        if (!menuOpen) {
-          frameCount += 1;
-
-          // Change target position based on mouse hover
-          if (stickManState === 'walking') {
-            targetPosition = -40;
-          } else if (stickManState === 'entering') {
-            targetPosition = -15;
-          } else if (stickManState === 'inside') {
-            targetPosition = -5;
-          }
-
-          // Smoothly move stick man position toward target
-          setStickManPosition(current => {
-            if (Math.abs(current - targetPosition) < 0.5) {
-              return targetPosition;
-            }
-            return current + (targetPosition - current) * 0.08;
-          });
+      if (stickManState === 'walking' && elapsed > 2000) {
+        setStickManPosition(prev => Math.min(prev + 0.5, 0));
+        if (stickManPosition >= -1) {
+          setStickManState('entering');
+          startTime = timestamp;
         }
+      } else if (stickManState === 'entering' && elapsed > 500) {
+        setStickManState('inside');
+        setStickManPosition(0);
       }
 
-      animationRef.current = requestAnimationFrame(animate);
+      animationFrame = requestAnimationFrame(animate);
     };
 
-    animationRef.current = requestAnimationFrame(animate);
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [stickManPosition, stickManState]);
 
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [menuOpen, stickManState]);
-
-  // Functions to open auth modal
-  const openLoginModal = () => {
-    setAuthModalTab('login');
+  // Handle auth modal functions
+  const openAuthModal = (tab) => {
+    setAuthModalTab(tab);
     setIsAuthModalOpen(true);
-
-    // Close mobile menu if open
-    if (menuOpen) {
-      setMenuOpen(false);
-    }
   };
 
-  const openRegisterModal = () => {
-    setAuthModalTab('register');
-    setIsAuthModalOpen(true);
-
-    // Close mobile menu if open
-    if (menuOpen) {
-      setMenuOpen(false);
-    }
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
   };
 
   return (
-    <header 
+    <header
       ref={headerRef}
-      className={`sticky top-0 z-30 w-full transition-all duration-300 ${
-        scrolled ? 'bg-white shadow-md py-2' : 'bg-white/95 py-3'
+      className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
+        scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'
       }`}
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-between items-center">
-        {/* Logo */}
-        <Link href="/">
-          <div className="relative flex items-center cursor-pointer">
-            {/* StickMan Animation */}
-            <div 
-              className="absolute right-[-10px] bottom-[-2px] h-10 w-10 overflow-visible"
-              onMouseEnter={() => setStickManState('entering')}
-              onMouseLeave={() => setStickManState('walking')}
-            >
-              <div 
-                className="absolute bottom-0"
-                style={{ 
-                  transform: `translateX(${stickManPosition}px)`,
-                  transition: 'transform 0.1s ease-out'
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" className="text-blue-700">
-                  <circle cx="12" cy="4" r="4" fill="currentColor" />
-                  <path
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    d="M12 8v8m-4-4h8m-8 8l4-8m4 8l-4-8"
-                  />
-                </svg>
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center relative">
+          {/* Logo */}
+          <Link href="/" legacyBehavior>
+            <a className="flex items-center">
+              <div className="relative">
+                <div
+                  className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center"
+                  style={{ transform: `translateX(${stickManPosition}px)` }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="white"
+                    className="w-6 h-6"
+                  >
+                    <path d="M12 2c-4.42 0-8 3.58-8 8 0 1.95.7 3.73 1.86 5.12L12 22l6.14-6.88C19.3 13.73 20 11.95 20 10c0-4.42-3.58-8-8-8zm0 11c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />
+                  </svg>
+                </div>
               </div>
-            </div>
-
-            {/* Logo Text */}
-            <div className="flex flex-col">
-              <span className="text-blue-700 font-bold text-lg sm:text-xl leading-none">
+              <span className={`ml-2 font-bold text-xl ${scrolled ? 'text-gray-900' : 'text-white'}`}>
                 Verslo Daigynas
               </span>
-              <span className="text-gray-500 text-xs sm:text-sm leading-tight">
-                Verslo adresÅ³ platforma
-              </span>
+            </a>
+          </Link>
+
+          {/* Navigation links - desktop */}
+          <div className="hidden md:flex items-center space-x-6">
+            <nav className="flex space-x-6">
+              <Link href="/" legacyBehavior>
+                <a className={`nav-link ${scrolled ? 'text-gray-800' : 'text-white'} hover:text-blue-500 transition-colors`}>
+                  Pagrindinis
+                </a>
+              </Link>
+              <Link href="/tiekejai" legacyBehavior>
+                <a className={`nav-link ${scrolled ? 'text-gray-800' : 'text-white'} hover:text-blue-500 transition-colors`}>
+                  Katalogas
+                </a>
+              </Link>
+              <Link href="/apie-mus" legacyBehavior>
+                <a className={`nav-link ${scrolled ? 'text-gray-800' : 'text-white'} hover:text-blue-500 transition-colors`}>
+                  Apie mus
+                </a>
+              </Link>
+              <Link href="/kontaktai" legacyBehavior>
+                <a className={`nav-link ${scrolled ? 'text-gray-800' : 'text-white'} hover:text-blue-500 transition-colors`}>
+                  Kontaktai
+                </a>
+              </Link>
+            </nav>
+
+            {/* Authentication section - conditionally render auth buttons or user menu */}
+            <div className="flex items-center">
+              {isLoggedIn ? (
+                // Render HeaderMenu for logged in users
+                <HeaderMenu />
+              ) : (
+                // Render sign in buttons for guests
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => openAuthModal('login')}
+                    className={`px-4 py-2 rounded-md transition-colors ${
+                      scrolled
+                        ? 'text-blue-600 hover:text-blue-800'
+                        : 'text-white hover:text-blue-200'
+                    }`}
+                  >
+                    Prisijungti
+                  </button>
+                  <button
+                    onClick={() => openAuthModal('register')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    Registruotis
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-6">
-          <nav className="flex items-center space-x-6">
-            <Link 
-              href="/" 
-              className="text-gray-800 hover:text-blue-600 font-medium transition-colors"
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden text-gray-500 focus:outline-none"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className={`h-6 w-6 ${scrolled ? 'text-gray-800' : 'text-white'}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              Pagrindinis
-            </Link>
-            <Link 
-              href="/paslaugos" 
-              className="text-gray-800 hover:text-blue-600 font-medium transition-colors"
-            >
-              Paslaugos
-            </Link>
-            <Link 
-              href="/apie-mus" 
-              className="text-gray-800 hover:text-blue-600 font-medium transition-colors"
-            >
-              Apie mus
-            </Link>
-            <Link 
-              href="/duk" 
-              className="text-gray-800 hover:text-blue-600 font-medium transition-colors"
-            >
-              DUK
-            </Link>
-            <Link 
-              href="/kontaktai" 
-              className="text-gray-800 hover:text-blue-600 font-medium transition-colors"
-            >
-              Kontaktai
-            </Link>
-          </nav>
-
-          <div className="flex items-center space-x-4">
-            {/* Language Switcher */}
-            <div className="relative">
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="appearance-none bg-transparent pl-2 pr-8 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500"
-              >
-                <option value="lt">LT</option>
-                <option value="en">EN</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Auth Button - NEW */}
-            <button 
-              onClick={openLoginModal}
-              className="text-blue-600 hover:text-blue-800 border border-blue-600 hover:border-blue-800 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-            >
-              Prisijungti / Registruotis
-            </button>
-          </div>
+              {menuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16m-7 6h7"
+                />
+              )}
+            </svg>
+          </button>
         </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden text-gray-700"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
-        >
-          {menuOpen ? (
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="md:hidden mt-4"
+            >
+              <div className="bg-white shadow-lg rounded-lg p-4">
+                <nav className="flex flex-col space-y-3">
+                  <Link href="/" legacyBehavior>
+                    <a 
+                      className="nav-link text-gray-800 hover:text-blue-500 transition-colors" 
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Pagrindinis
+                    </a>
+                  </Link>
+                  <Link href="/tiekejai" legacyBehavior>
+                    <a 
+                      className="nav-link text-gray-800 hover:text-blue-500 transition-colors" 
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Katalogas
+                    </a>
+                  </Link>
+                  <Link href="/apie-mus" legacyBehavior>
+                    <a 
+                      className="nav-link text-gray-800 hover:text-blue-500 transition-colors" 
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Apie mus
+                    </a>
+                  </Link>
+                  <Link href="/kontaktai" legacyBehavior>
+                    <a 
+                      className="nav-link text-gray-800 hover:text-blue-500 transition-colors" 
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Kontaktai
+                    </a>
+                  </Link>
+                </nav>
+
+                {/* Mobile authentication buttons */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  {isLoggedIn ? (
+                    <div className="space-y-3">
+                      <Link href="/dashboard" legacyBehavior>
+                        <a 
+                          className="block w-full py-2 text-center bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors" 
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          Valdymo skydelis
+                        </a>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          signOut(auth);
+                          setMenuOpen(false);
+                        }}
+                        className="block w-full py-2 text-center bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
+                      >
+                        Atsijungti
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => {
+                          openAuthModal('login');
+                          setMenuOpen(false);
+                        }}
+                        className="block w-full py-2 text-center bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors"
+                      >
+                        Prisijungti
+                      </button>
+                      <button
+                        onClick={() => {
+                          openAuthModal('register');
+                          setMenuOpen(false);
+                        }}
+                        className="block w-full py-2 text-center bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        Registruotis
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
           )}
-        </button>
+        </AnimatePresence>
       </div>
 
-      {/* Mobile Navigation Dropdown */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden bg-white border-t"
-          >
-            <div className="max-w-6xl mx-auto px-4 py-3">
-              <nav className="flex flex-col space-y-3">
-                <Link
-                  href="/"
-                  className="text-gray-800 hover:text-blue-600 font-medium py-2 transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Pagrindinis
-                </Link>
-                <Link
-                  href="/paslaugos"
-                  className="text-gray-800 hover:text-blue-600 font-medium py-2 transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Paslaugos
-                </Link>
-                <Link
-                  href="/apie-mus"
-                  className="text-gray-800 hover:text-blue-600 font-medium py-2 transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Apie mus
-                </Link>
-                <Link
-                  href="/duk"
-                  className="text-gray-800 hover:text-blue-600 font-medium py-2 transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  DUK
-                </Link>
-                <Link
-                  href="/kontaktai"
-                  className="text-gray-800 hover:text-blue-600 font-medium py-2 transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Kontaktai
-                </Link>
-
-                {/* Auth Option in Mobile Menu - NEW */}
-                <button
-                  onClick={openLoginModal}
-                  className="text-blue-600 hover:text-blue-800 font-medium py-2 text-left transition-colors"
-                >
-                  Prisijungti / Registruotis
-                </button>
-
-                <div className="py-2">
-                  <select
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="appearance-none bg-transparent pl-2 pr-8 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="lt">LietuviÅ³</option>
-                    <option value="en">English</option>
-                  </select>
-                </div>
-              </nav>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Auth Modal Integration - NEW */}
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        initialTab={authModalTab} 
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        initialTab={authModalTab}
       />
     </header>
   );

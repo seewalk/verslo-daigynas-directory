@@ -459,5 +459,300 @@
         }
       ]
     }
-  }
+  },
+    {
+    "id": "verslovartai",
+    "name": "Verslo Vartai",
+    "city": "Kaunas",
+    "services": ["Registracijos adresas", "Virtualus biuras", "Dokumentų saugojimas"],
+    "price": "nuo €29/mėn",
+    "website": "https://verslovartai.lt/paslaugos",
+    "logo": "/logo-verslovartai.png",
+    "description": "Verslo Vartai – virtualių biurų ekspertai Kaune, siūlantys patogias paslaugas smulkiam ir vidutiniam verslui. Patikima partnerystė nuo pirmos dienos.",
+    "email": "kontaktai@verslovartai.lt",
+    "phone": "+370 37 777777",
+    "googleReview": {
+      "rating": 4.8,
+      "reviewCount": 18,
+      "reviews": [
+        {
+          "author": "Agnė Petrauskaitė",
+          "text": "Labai patenkinta paslaugomis, registracijos adresas suteiktas greitai, komunikacija puiki!"
+        }
+      ]
+    },
+    "verificationLevel": "none",
+    "verificationStatus": {
+      "email": { "verified": false, "verifiedAt": null },
+      "phone": { "verified": false, "verifiedAt": null },
+      "address": { "verified": false, "verifiedAt": null },
+      "documents": { "verified": false, "verifiedAt": null },
+      "physicalAudit": { "verified": false, "verifiedAt": null, "auditor": null }
+    },
+    "verificationDocuments": [],
+    "complianceBadges": [],
+    "trustMetrics": {
+      "overallScore": 0,
+      "responseRate": 0,
+      "responseTime": 0,
+      "profileCompleteness": 0,
+      "verificationLevel": 0,
+      "yearsInBusiness": 0,
+      "reviewScore": 0,
+      "reviewCount": 0,
+      "disputeResolutionRate": 0,
+      "lastUpdated": null
+    },
+    "businessHours": {
+      "monday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "tuesday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "wednesday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "thursday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "friday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "saturday": { "isClosed": true },
+      "sunday": { "isClosed": true },
+      "holidays": [],
+      "timezone": "Europe/Vilnius"
+    },
+    "currentStatus": {
+      "isOpen": true,
+      "reopensAt": null,
+      "closesAt": null,
+      "specialHours": false
+    }
+  },
+  {
+    "id": "adresas123",
+    "name": "Adresas123",
+    "city": "Klaipėda",
+    "services": ["Registracijos adresas", "Korespondencijos administravimas"],
+    "price": "nuo €20/mėn",
+    "website": "https://adresas123.lt/",
+    "logo": "/logo-adresas123.png",
+    "description": "Adresas123 – paprastas ir greitas būdas įsteigti juridinį adresą Klaipėdoje. Siūlome lankstumą ir greitą aptarnavimą.",
+    "email": "info@adresas123.lt",
+    "phone": "+370 46 123456",
+    "googleReview": {
+      "rating": 4.5,
+      "reviewCount": 12,
+      "reviews": [
+        {
+          "author": "Rokas Dainys",
+          "text": "Viskas paprasta ir greita, labai patogu naudotis paslauga nuotoliniu būdu."
+        }
+      ]
+    },
+    "verificationLevel": "none",
+    "verificationStatus": {
+      "email": { "verified": false, "verifiedAt": null },
+      "phone": { "verified": false, "verifiedAt": null },
+      "address": { "verified": false, "verifiedAt": null },
+      "documents": { "verified": false, "verifiedAt": null },
+      "physicalAudit": { "verified": false, "verifiedAt": null, "auditor": null }
+    },
+    "verificationDocuments": [],
+    "complianceBadges": [],
+    "trustMetrics": {
+      "overallScore": 0,
+      "responseRate": 0,
+      "responseTime": 0,
+      "profileCompleteness": 0,
+      "verificationLevel": 0,
+      "yearsInBusiness": 0,
+      "reviewScore": 0,
+      "reviewCount": 0,
+      "disputeResolutionRate": 0,
+      "lastUpdated": null
+    },
+    "businessHours": {
+      "monday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "tuesday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "wednesday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "thursday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "friday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "saturday": { "isClosed": true },
+      "sunday": { "isClosed": true },
+      "holidays": [],
+      "timezone": "Europe/Vilnius"
+    },
+    "currentStatus": {
+      "isOpen": true,
+      "reopensAt": null,
+      "closesAt": null,
+      "specialHours": false
+    }
+  },
+  {
+    "id": "vilniausbiuras",
+    "name": "Vilniaus Biuras",
+    "city": "Vilnius",
+    "services": ["Registracijos adresas", "Biuro nuoma", "Virtualus biuras"],
+    "price": "nuo €40/mėn",
+    "website": "https://vilniausbiuras.lt",
+    "logo": "/logo-vilniausbiuras.png",
+    "description": "Vilniaus Biuras siūlo šiuolaikiškus virtualaus biuro sprendimus augančiam verslui sostinėje. Galimybė naudotis biuro erdve pagal poreikį.",
+    "email": "info@vilniausbiuras.lt",
+    "phone": "+370 5 2101010",
+    "googleReview": {
+      "rating": 4.9,
+      "reviewCount": 45,
+      "reviews": [
+        {
+          "author": "Lina Kairytė",
+          "text": "Puiki lokacija ir malonus personalas. Labai lankstus aptarnavimas."
+        }
+      ]
+    },
+    "verificationLevel": "none",
+    "verificationStatus": {
+      "email": { "verified": false, "verifiedAt": null },
+      "phone": { "verified": false, "verifiedAt": null },
+      "address": { "verified": false, "verifiedAt": null },
+      "documents": { "verified": false, "verifiedAt": null },
+      "physicalAudit": { "verified": false, "verifiedAt": null, "auditor": null }
+    },
+    "verificationDocuments": [],
+    "complianceBadges": [],
+    "trustMetrics": {
+      "overallScore": 0,
+      "responseRate": 0,
+      "responseTime": 0,
+      "profileCompleteness": 0,
+      "verificationLevel": 0,
+      "yearsInBusiness": 0,
+      "reviewScore": 0,
+      "reviewCount": 0,
+      "disputeResolutionRate": 0,
+      "lastUpdated": null
+    },
+    "businessHours": {
+      "monday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "tuesday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "wednesday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "thursday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "friday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+      "saturday": { "isClosed": true },
+      "sunday": { "isClosed": true },
+      "holidays": [],
+      "timezone": "Europe/Vilnius"
+    },
+    "currentStatus": {
+      "isOpen": true,
+      "reopensAt": null,
+      "closesAt": null,
+    "specialHours": false
+    }
+  },
+  {
+  "id": "verslovartai",
+  "name": "Verslo Vartai",
+  "city": "Kaunas",
+  "services": ["Registracijos adresas", "Virtualus biuras", "Dokumentų saugojimas"],
+  "price": "nuo €29/mėn",
+  "website": "https://verslovartai.lt/paslaugos",
+  "logo": "/logo-verslovartai.png",
+  "description": "Verslo Vartai – virtualių biurų ekspertai Kaune, siūlantys patogias paslaugas smulkiam ir vidutiniam verslui. Patikima partnerystė nuo pirmos dienos.",
+  "email": "kontaktai@verslovartai.lt",
+  "phone": "+370 37 777777",
+  "googleReview": {
+    "rating": 4.8,
+    "reviewCount": 18,
+    "reviews": [
+      {
+        "author": "Agnė Petrauskaitė",
+        "text": "Labai patenkinta paslaugomis, registracijos adresas suteiktas greitai, komunikacija puiki!"
+      }
+    ]
+  },
+  "verificationLevel": "none",
+  "verificationStatus": {
+    "email": { "verified": false, "verifiedAt": null },
+    "phone": { "verified": false, "verifiedAt": null },
+    "address": { "verified": false, "verifiedAt": null },
+    "documents": { "verified": false, "verifiedAt": null },
+    "physicalAudit": { "verified": false, "verifiedAt": null, "auditor": null }
+  },
+  "verificationDocuments": [],
+  "complianceBadges": [],
+  "trustMetrics": {
+    "overallScore": 0,
+    "responseRate": 0,
+    "responseTime": 0,
+    "profileCompleteness": 0,
+    "verificationLevel": 0,
+    "yearsInBusiness": 0,
+    "reviewScore": 0,
+    "reviewCount": 0,
+    "disputeResolutionRate": 0,
+    "lastUpdated": null
+  },
+  "businessHours": {
+    "monday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+    "tuesday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+    "wednesday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+    "thursday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+    "friday": { "open": "09:00", "close": "18:00", "isOpen24Hours": false, "isClosed": false },
+    "saturday": { "isClosed": true },
+    "sunday": { "isClosed": true },
+    "holidays": [],
+    "timezone": "Europe/Vilnius"
+  },
+  "currentStatus": {
+    "isOpen": true,
+    "reopensAt": null,
+    "closesAt": null,
+    "specialHours": false
+  },
+  "team": [
+    {
+      "id": "tomas-jonaitis",
+      "name": "Tomas Jonaitis",
+      "position": "Direktorius",
+      "photoUrl": "/team/tomas-jonaitis.jpg",
+      "bio": "Tomas turi daugiau nei 10 metų patirties verslo konsultavimo srityje. Jis įkūrė Verslo Vartus 2015 metais su tikslu padėti smulkiems verslams efektyviai pradėti veiklą.",
+      "email": "tomas@verslovartai.lt",
+      "phone": "+370 600 12345",
+      "featured": true,
+      "order": 1,
+      "socialMedia": {
+        "linkedin": "https://linkedin.com/in/tomas-jonaitis",
+        "twitter": "https://twitter.com/tomasjonaitis"
+      },
+      "qualifications": ["Verslo administravimo magistras", "Sertifikuotas verslo konsultantas"],
+      "languages": ["Lietuvių", "Anglų", "Rusų"]
+    },
+    {
+      "id": "lina-kazlauskiene",
+      "name": "Lina Kazlauskienė",
+      "position": "Klientų aptarnavimo vadovė",
+      "photoUrl": "/team/lina-kazlauskiene.jpg",
+      "bio": "Lina koordinuoja visus klientų aptarnavimo procesus ir užtikrina sklandų paslaugų teikimą. Ji visada pasirengusi padėti ir rasti geriausius sprendimus klientų poreikiams.",
+      "email": "lina@verslovartai.lt",
+      "phone": "+370 600 54321",
+      "featured": true,
+      "order": 2,
+      "socialMedia": {
+        "linkedin": "https://linkedin.com/in/lina-kazlauskiene"
+      },
+      "qualifications": ["Komunikacijos bakalauras", "Klientų aptarnavimo sertifikatas"],
+      "languages": ["Lietuvių", "Anglų"]
+    },
+    {
+      "id": "marius-petrauskas",
+      "name": "Marius Petrauskas",
+      "position": "IT specialistas",
+      "photoUrl": "/team/marius-petrauskas.jpg",
+      "bio": "Marius prižiūri visas technines sistemas ir užtikrina sklandų IT infrastruktūros veikimą. Jis taip pat konsultuoja klientus technologiniais klausimais.",
+      "email": "marius@verslovartai.lt",
+      "featured": false,
+      "order": 3,
+      "socialMedia": {
+        "linkedin": "https://linkedin.com/in/marius-petrauskas",
+        "github": "https://github.com/mariuspetrauskas"
+      },
+      "qualifications": ["Informatikos inžinerijos bakalauras"],
+      "languages": ["Lietuvių", "Anglų"]
+    }
+  ]
+}
 ]

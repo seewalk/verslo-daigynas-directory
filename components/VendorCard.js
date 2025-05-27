@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import FavoriteHeart from './Users/FavoriteHeart';
 
 
 
@@ -88,6 +89,7 @@ const VendorCard = ({
     
     return stars;
   };
+
 
   return (
     <motion.div
@@ -201,6 +203,9 @@ const VendorCard = ({
             </div>
           </div>
         )}
+
+         {/* Pass the vendor name to FavoriteHeart */}
+              {name && <FavoriteHeart vendorName={name} />}
 
         {/* Description (Optional) */}
         {description && !googleReview?.reviews?.length && (
