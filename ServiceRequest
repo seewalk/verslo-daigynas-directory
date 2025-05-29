@@ -1,0 +1,17 @@
+serviceRequests/
+  {requestId}/
+    vendorId: String       // Reference to vendor
+    vendorName: String     // Vendor name for easier reference
+    userId: String         // Requesting user's ID
+    userEmail: String      // User's email
+    userFullName: String   // User's full name
+    userPhone: String      // Optional contact phone
+    requestTitle: String   // Short summary of the request
+    requestDetails: String // Detailed description
+    status: String         // 'pending', 'inProgress', 'completed', 'rejected'
+    createdAt: Timestamp   // When request was created
+    updatedAt: Timestamp   // When request was last updated
+    responseText: String   // Vendor's response (null when pending)
+    responseDate: Timestamp // When vendor responded (null when pending)
+    isArchived: Boolean    // Flag for archiving completed requests
+    ownerUid: String       // UID of vendor owner (for access control)

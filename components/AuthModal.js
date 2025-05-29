@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   getAuth, 
@@ -8,7 +7,6 @@ import {
   sendPasswordResetEmail 
 } from "firebase/auth";
 import { initializeApp } from "firebase/app";
-
 import {
   getFirestore,
   doc,

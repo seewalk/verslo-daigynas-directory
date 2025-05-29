@@ -4,13 +4,19 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import VendorRegistrationCTA from '../../components/VendorRegistrationCTA';
 import ContentHighlightDivider from '../../components/ContentHighLightDivider';
 import FavoriteHeart from '../../components/Users/FavoriteHeart';
 import TeamProfiles from '../../components/Users/TeamProfiles';
+import ClaimBusinessModal from '../../components/Users/ClaimBusinessModal';
+import { useAuthState } from "react-firebase-hooks/auth";
+import { getAuth } from "firebase/auth";
+import ServiceRequestModal from '../../components/Users/ServiceRequestModal';
+
+
 
 
 
@@ -44,8 +50,7 @@ const db = getFirestore();
 
 
 // Trust Badge Component
-const TrustBadge = ({ verificationLevel, trustScore }) => {
-  // Badge styles based on verification level
+const TrustBadge = ({ verificationLevel = 'none', trustScore = null }) => {
   const badgeStyle = {
     premium: {
       bgColor: 'bg-gradient-to-r from-blue-500 to-purple-500',
@@ -88,16 +93,14 @@ const TrustBadge = ({ verificationLevel, trustScore }) => {
       label: 'Listing Unverified'
     }
   };
-  
+
   const badge = badgeStyle[verificationLevel] || badgeStyle.none;
 
-  
-  
   return (
     <div className={`inline-flex items-center px-3 py-1 rounded-full ${badge.bgColor} ${badge.textColor} text-sm font-medium`}>
       {badge.icon}
       <span className="ml-1">{badge.label}</span>
-      {trustScore && (
+      {trustScore !== null && (
         <span className="ml-2 pl-2 border-l border-white border-opacity-30">
           {trustScore}% Trust
         </span>
@@ -116,6 +119,8 @@ const BusinessStatusIndicator = ({ businessHours }) => {
       setStatusMessage('Darbo laikas nenustatytas');
       return;
     }
+
+    
     
     // Calculate if business is currently open
     const now = new Date();
@@ -207,61 +212,85 @@ export default function VendorProfile() {
   const [vendor, setVendor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [showClaimBusinessModal, setShowClaimBusinessModal] = useState(false);
+  // This line should be exactly here, at this scope
+  const [showServiceRequestModal, setShowServiceRequestModal] = useState(false);
+  const auth = getAuth(app);
+  const [user] = useAuthState(auth);
+
 
   useEffect(() => {
-    const fetchVendorData = async () => {
-      if (!id) return; // Wait until id is available from router
+  const fetchVendorData = async () => {
+    if (!id) return;
 
+    try {
+      setLoading(true);
+      let resolvedVendor = null;
+
+      // Try direct document ID first
       try {
-        setLoading(true);
-        
-        // First try to fetch by direct ID (in case it's a Firebase document ID)
-        try {
-          const vendorDoc = await getDoc(doc(db, "vendors", id));
-          if (vendorDoc.exists()) {
-            const vendorData = vendorDoc.data();
-            setVendor({ id: vendorDoc.id, ...vendorData });
-            setLoading(false);
-            return;
-          }
-        } catch (e) {
-          // This is fine, it means the ID isn't a direct document ID
-          console.log("Not a direct document ID, continuing search...");
+        const vendorDoc = await getDoc(doc(db, "vendors", id));
+        if (vendorDoc.exists()) {
+          resolvedVendor = { id: vendorDoc.id, ...vendorDoc.data() };
         }
-        
-        // Query vendors collection to find the vendor with matching normalized name
+      } catch (e) {
+        console.log("Not a direct document ID, continuing search...");
+      }
+
+      // If not found by ID, try by slug
+      if (!resolvedVendor) {
         const vendorsRef = collection(db, "vendors");
         const querySnapshot = await getDocs(vendorsRef);
-        
-        let foundVendor = null;
-        querySnapshot.forEach((doc) => {
-          const vendorData = doc.data();
-          // Normalize vendor name to match URL slug format
+
+        querySnapshot.forEach((docSnap) => {
+          const vendorData = docSnap.data();
           const normalizedName = generateVendorSlug(vendorData.name);
-          
           if (normalizedName === id) {
-            foundVendor = { id: doc.id, ...vendorData };
+            resolvedVendor = { id: docSnap.id, ...vendorData };
           }
         });
-        
-        if (foundVendor) {
-          setVendor(foundVendor);
-          setLoading(false);
-        } else {
-          setNotFound(true);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error("Error fetching vendor data:", error);
-        setLoading(false);
-        setNotFound(true);
       }
-    };
 
-    if (id) {
-      fetchVendorData();
+      if (resolvedVendor) {
+        // Check ownership claim (if user is logged in)
+        let isOwner = false;
+
+        if (user) {
+          const claimQuery = query(
+            collection(db, "businessClaims"),
+            where("vendorId", "==", resolvedVendor.id),
+            where("userId", "==", user.uid),
+            where("status", "==", "approved")
+          );
+
+          const claimSnapshot = await getDocs(claimQuery);
+          if (!claimSnapshot.empty) {
+            isOwner = true;
+          }
+        }
+
+        // Attach verification info
+        setVendor({
+          ...resolvedVendor,
+          isOwner,
+          verificationLevel: isOwner ? "standard" : "unverified"
+        });
+        setLoading(false);
+      } else {
+        setNotFound(true);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching vendor data:", error);
+      setLoading(false);
+      setNotFound(true);
     }
-  }, [id]);
+  };
+
+  if (id) {
+    fetchVendorData();
+  }
+}, [id, user]);
 
   // Handle loading state
   if (router.isFallback || loading) {
@@ -674,6 +703,33 @@ export default function VendorProfile() {
                     Susisiekti dabar
                   </button>
                 </div>
+
+                <div className="mt-3">
+  <button 
+    className="w-full flex items-center justify-center bg-white border border-dashed border-amber-500 text-amber-600 py-2 px-4 rounded-md hover:bg-amber-50 transition-colors relative group"
+    onClick={() => setShowClaimBusinessModal(true)}
+  >
+    <span className="absolute top-0 right-0 transform -translate-y-1/2 translate-x-1/2 bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">Naujiena</span>
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+    <span className="group-hover:underline">Perimti šį verslą</span>
+  </button>
+</div>
+
+<div className="mt-3">
+  <button 
+    className="w-full flex items-center justify-center bg-white border border-dashed border-blue-500 text-blue-600 py-2 px-4 rounded-md hover:bg-blue-50 transition-colors relative group"
+    onClick={() => setShowServiceRequestModal(true)}
+  >
+    <span className="absolute top-0 right-0 transform -translate-y-1/2 translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">Naujiena</span>
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+    </svg>
+    <span className="group-hover:underline">Siųsti paslaugų užklausą</span>
+  </button>
+</div>
+
               </motion.div>
             </div>
           </div>
@@ -696,7 +752,23 @@ export default function VendorProfile() {
       )}
         
         <VendorRegistrationCTA />
+
       </main>
+
+      {/* Add the modal at the end */}
+      <ClaimBusinessModal
+        isOpen={showClaimBusinessModal}
+        onClose={() => setShowClaimBusinessModal(false)}
+        vendorId={vendor?.id}
+        vendorName={vendor?.name}
+      />
+
+      <ServiceRequestModal
+  isOpen={showServiceRequestModal}
+  onClose={() => setShowServiceRequestModal(false)}
+  vendorId={vendor?.id}
+  vendorName={vendor?.name}
+/>
       
       <Footer />
       

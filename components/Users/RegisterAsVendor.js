@@ -119,5 +119,3 @@ const RegisterAsVendor = ({ className = "", buttonStyle = "default" }) => {
   );
 };
 
-export default RegisterAsVendor;
-

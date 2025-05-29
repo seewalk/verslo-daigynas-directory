@@ -1,9 +1,9 @@
 // components/users/HeaderMenu.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import RegisterAsVendor from './RegisterAsVendor';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,222 +21,404 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const auth = getAuth();
+const db = getFirestore();
 
-const HeaderMenu = () => {
+const HeaderMenu = ({ transparent = false }) => {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showRegisterVendor, setShowRegisterVendor] = useState(false);
+  const [hasApprovedClaims, setHasApprovedClaims] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
-
+  const menuRef = useRef(null);
+  
+  // Handle clicks outside menu to close it
   useEffect(() => {
-    const fetchUserData = async (user) => {
-      try {
-        // Get user document
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        
-        if (userDoc.exists()) {
-          setUserProfile(userDoc.data());
-        }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        setLoading(false);
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
       }
     };
-
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  // Handle scroll effects
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+  
+  // Check user auth status and get profile data
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        fetchUserData(currentUser);
+        setUser(currentUser);
+        
+        // Get user document
+        try {
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUserProfile({
+              id: currentUser.uid,
+              ...userData
+            });
+            
+            // Check for approved business claims
+            const claimsQuery = query(
+              collection(db, "businessClaims"),
+              where("userId", "==", currentUser.uid),
+              where("status", "==", "approved")
+            );
+            
+            const claimsSnapshot = await getDocs(claimsQuery);
+            setHasApprovedClaims(!claimsSnapshot.empty);
+            
+          } else {
+            setUserProfile({
+              id: currentUser.uid,
+              email: currentUser.email,
+              role: "user"
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        } finally {
+          setLoading(false);
+        }
       } else {
+        setUser(null);
         setUserProfile(null);
         setLoading(false);
       }
     });
-
+    
     return () => unsubscribe();
   }, []);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
+  // Handle user sign out
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      setIsMenuOpen(false);
       router.push('/');
     } catch (error) {
       console.error("Error signing out:", error);
     }
   };
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isMenuOpen && !event.target.closest('.user-menu-container')) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMenuOpen]);
-
-  // If loading, show minimal content to prevent layout shifts
-  if (loading) {
-    return <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>;
-  }
-
-  // If not logged in, don't show the user menu
-  if (!user) {
-    return null;
-  }
-
-  const menuVariants = {
-    hidden: { opacity: 0, y: -20, scale: 0.95 },
-    visible: { opacity: 1, y: 0, scale: 1 }
+  
+  // Open vendor registration modal
+  const handleRegisterVendor = () => {
+    setIsMenuOpen(false);
+    setShowRegisterVendor(true);
   };
-
+  
+  // Determine if user has vendor capabilities
+  const isVendor = 
+    userProfile?.role === 'vendor' || 
+    userProfile?.role === 'admin' || 
+    hasApprovedClaims || 
+    (userProfile?.vendors && userProfile.vendors.length > 0);
+  
+  // Determine user account type for display
+  const getAccountType = () => {
+    if (!userProfile) return null;
+    if (userProfile.role === 'admin') return 'Administratorius';
+    if (isVendor) return 'Tiekėjas';
+    return 'Vartotojas';
+  };
+  
+  // Get badge color for account type
+  const getAccountBadgeColor = () => {
+    const accountType = getAccountType();
+    if (!accountType) return '';
+    
+    if (accountType === 'Administratorius') return 'bg-purple-100 text-purple-800';
+    if (accountType === 'Tiekėjas') return 'bg-blue-100 text-blue-800';
+    return 'bg-green-100 text-green-800';
+  };
+  
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return '?';
+    
+    if (userProfile?.firstName && userProfile?.lastName) {
+      return `${userProfile.firstName[0]}${userProfile.lastName[0]}`;
+    }
+    
+    if (userProfile?.displayName) {
+      const nameParts = userProfile.displayName.split(' ');
+      if (nameParts.length >= 2) {
+        return `${nameParts[0][0]}${nameParts[1][0]}`;
+      }
+      return userProfile.displayName[0];
+    }
+    
+    return user.email[0].toUpperCase();
+  };
+  
+  // Menu dropdown animation variants
+  const dropdownVariants = {
+    hidden: { 
+      opacity: 0, 
+      y: -10,
+      transition: { duration: 0.2 } 
+    },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 24, 
+        duration: 0.3 
+      } 
+    }
+  };
+  
   return (
-    <div className="user-menu-container relative z-20">
-      <button
-        onClick={toggleMenu}
-        className="flex items-center focus:outline-none"
-        aria-label="User menu"
-        aria-expanded={isMenuOpen}
-      >
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-md">
-          {user.email.charAt(0).toUpperCase()}
-        </div>
-        <div className="hidden md:block ml-2 text-left">
-          <span className="block text-sm font-medium text-gray-700 truncate max-w-[120px]">
-            {user.displayName || user.email.split('@')[0]}
-          </span>
-          <span className="text-xs text-gray-500">
-            {userProfile?.role === 'vendor' ? 'Verslo paskyra' : 'Vartotojo paskyra'}
-          </span>
-        </div>
-        <svg 
-          className={`ml-1 h-5 w-5 text-gray-400 transition-transform duration-200 ${isMenuOpen ? 'transform rotate-180' : ''}`}
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-        </svg>
-      </button>
-
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            variants={menuVariants}
-            transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none"
-            role="menu"
-          >
-            <div className="px-4 py-3 border-b border-gray-100">
-              <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
-              {userProfile?.role === 'vendor' && userProfile?.companyName && (
-                <p className="mt-1 text-xs text-gray-500 truncate">{userProfile.companyName}</p>
-              )}
-            </div>
-            
-            <div className="py-1">
-              <Link href="/dashboard" legacyBehavior>
-                <a 
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  role="menuitem"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <svg className="mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                  Valdymo skydelis
-                </a>
-              </Link>
-              
-              {userProfile?.role === 'vendor' && userProfile?.vendorId && (
-                <Link href={`/dashboard/edit-profile/${userProfile.vendorId}`} legacyBehavior>
-                  <a 
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    role="menuitem"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <svg className="mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Redaguoti profilį
-                  </a>
-                </Link>
-              )}
-              
-              <Link href="/dashboard/favorites" legacyBehavior>
-                <a 
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  role="menuitem"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <svg className="mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  Mėgstami
-                </a>
-              </Link>
-              
-              <Link href="/dashboard/settings" legacyBehavior>
-                <a 
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                  role="menuitem"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <svg className="mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Nustatymai
-                </a>
-              </Link>
-            </div>
-            
-            {/* Register as vendor (if user is not a vendor) */}
-            {(!userProfile?.role || userProfile?.role !== 'vendor') && (
-              <div className="py-1 border-t border-gray-100">
-                <div className="px-4 py-2">
-                  <RegisterAsVendor buttonStyle="text" className="w-full flex items-center justify-center text-sm text-blue-600 hover:text-blue-800" />
-                </div>
+    <>
+      <div className={`relative z-10 ${transparent && !scrolled ? 'text-white' : ''}`} ref={menuRef}>
+        {user ? (
+          <div className="relative">
+            {/* User avatar button */}
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className={`flex items-center space-x-2 focus:outline-none ${
+                transparent && !scrolled 
+                  ? 'hover:text-gray-200' 
+                  : 'hover:text-indigo-500'
+              } transition-colors duration-200`}
+              aria-expanded={isMenuOpen}
+              aria-haspopup="true"
+              aria-label="User menu"
+            >
+              <div className={`relative h-10 w-10 rounded-full overflow-hidden flex items-center justify-center ${
+                isVendor ? 'bg-blue-100' : 'bg-gray-100'
+              } text-sm font-medium border-2 ${
+                isMenuOpen 
+                  ? 'border-indigo-500' 
+                  : transparent && !scrolled 
+                    ? 'border-white'
+                    : 'border-gray-200'
+              }`}>
+                {userProfile?.photoURL ? (
+                  <img 
+                    src={userProfile.photoURL} 
+                    alt={userProfile.displayName || user.email} 
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.style.display = 'none';
+                      e.target.parentNode.style.display = 'flex';
+                    }}
+                  />
+                ) : (
+                  <span className={`${
+                    isVendor ? 'text-blue-700' : 'text-gray-700'
+                  }`}>
+                    {getUserInitials()}
+                  </span>
+                )}
+                
+                {/* Badge for account type */}
+                <span className={`absolute -bottom-1 -right-1 h-4 w-4 ${
+                  userProfile?.role === 'admin' 
+                    ? 'bg-purple-500'
+                    : isVendor 
+                      ? 'bg-blue-500'
+                      : 'bg-green-500'
+                } rounded-full border-2 border-white flex items-center justify-center`}>
+                  <span className="sr-only">{getAccountType()}</span>
+                </span>
               </div>
-            )}
-            
-            {/* Sign out button */}
-            <div className="py-1 border-t border-gray-100">
-              <button
-                onClick={handleSignOut}
-                className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                role="menuitem"
+              
+              <span className={`hidden md:block font-medium max-w-[120px] truncate ${
+                scrolled || !transparent ? 'text-gray-800' : 'text-white'
+              }`}>
+                {userProfile?.firstName || userProfile?.displayName || user.email.split('@')[0]}
+              </span>
+              
+              {/* Dropdown arrow */}
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 20 20" 
+                fill="currentColor" 
+                className={`h-5 w-5 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`}
               >
-                <svg className="mr-3 h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Atsijungti
-              </button>
-            </div>
-          </motion.div>
+                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+              </svg>
+            </button>
+            
+            {/* Dropdown menu */}
+            <AnimatePresence>
+              {isMenuOpen && (
+                <motion.div
+                  variants={dropdownVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  className="absolute right-0 z-20 mt-2 w-60 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                >
+                  {/* User info */}
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center space-x-3">
+                      {/* Account type badge */}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getAccountBadgeColor()}`}>
+                        {getAccountType()}
+                      </span>
+                      
+                      {userProfile?.verified && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <svg className="mr-1 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 mt-1 truncate">
+                      {userProfile?.displayName || user.email}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                  
+                  {/* Navigation links */}
+                  <div className="py-1">
+                    <Link 
+                      href="/dashboard" 
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <svg className="mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                      </svg>
+                      Vartotojo panelė
+                    </Link>
+                    
+                    {isVendor && (
+                      <Link 
+                        href="/dashboard/vendor" 
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <svg className="mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
+                          <path fillRule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+                        </svg>
+                        Valdyti verslą
+                      </Link>
+                    )}
+                    
+                    {userProfile?.role === 'admin' && (
+                      <Link 
+                        href="/administracija/dashboard" 
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <svg className="mr-3 h-5 w-5 text-purple-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                        </svg>
+                        Administravimo skydas
+                      </Link>
+                    )}
+                    
+                    <Link 
+                      href="/dashboard/settings" 
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <svg className="mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                      </svg>
+                      Nustatymai
+                    </Link>
+                  </div>
+                  
+                  {/* Vendor registration */}
+                  {!isVendor && (
+                    <div className="py-1 border-t border-gray-100">
+                      <button
+                        onClick={handleRegisterVendor}
+                        className="flex w-full items-center px-4 py-2 text-left text-sm text-indigo-700 hover:bg-indigo-50 focus:outline-none"
+                      >
+                        <svg className="mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        Tapti tiekėju
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Sign out */}
+                  <div className="py-1 border-t border-gray-100">
+                    <button
+                      onClick={handleSignOut}
+                      className="flex w-full items-center px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 focus:outline-none"
+                    >
+                      <svg className="mr-3 h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Atsijungti
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ) : (
+          // Login/Register buttons for non-authenticated users
+          <div className="flex items-center space-x-4">
+            <Link 
+              href="/prisijungti" 
+              className={`text-sm font-medium ${
+                transparent && !scrolled 
+                  ? 'text-white hover:text-gray-200' 
+                  : 'text-gray-700 hover:text-indigo-600'
+              } transition-colors duration-200`}
+            >
+              Prisijungti
+            </Link>
+            
+            <Link 
+              href="/registruotis" 
+              className={`px-4 py-2 rounded-md text-sm font-medium ${
+                transparent && !scrolled 
+                  ? 'bg-white text-indigo-600 hover:bg-opacity-90' 
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              } shadow-sm transition-colors duration-200`}
+            >
+              Registruotis
+            </Link>
+          </div>
         )}
-      </AnimatePresence>
-    </div>
+      </div>
+      
+      {/* Vendor registration modal */}
+      {showRegisterVendor && (
+        <RegisterAsVendor 
+          onClose={() => setShowRegisterVendor(false)} 
+          userId={user?.uid}
+          userEmail={user?.email}
+        />
+      )}
+    </>
   );
 };
 
 export default HeaderMenu;
-
