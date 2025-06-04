@@ -9,6 +9,54 @@
     "start": "next start",
     "export": "next export"
   },
+  "features": {
+    "userFeatures": [
+      {
+        "id": "favorites",
+        "title": "Tiekėjų Pamėgti Sąrašai",
+        "description": "Pridėkite tiekėjus į pamėgtųjų sąrašą, kad galėtumėte greitai rasti juos ateityje.",
+        "versionAdded": "1.0.0",
+        "isAvailable": true
+      },
+      {
+        "id": "communication",
+        "title": "Tiesioginė Komunikacija",
+        "description": "Bendraukite su tiekėjais platformoje - jokių išorinių el. paštų ar kitų kanalų.", 
+        "versionAdded": "1.0.0",
+        "isAvailable": true
+      }
+    ],
+    "vendorFeatures": [
+      {
+        "id": "claim-business",
+        "title": "Verslo Profilio Pretendavimas",
+        "description": "Pretenduokite į savo verslo profilį ir valdykite jį tiesiogiai platformoje.",
+        "versionAdded": "1.0.0",
+        "isAvailable": true
+      },
+      {
+        "id": "team-management",
+        "title": "Komandos Narių Valdymas",
+        "description": "Pridėkite savo komandos narius ir jų kompetencijas į verslo profilį.",
+        "versionAdded": "1.0.0",
+        "isAvailable": true
+      }
+    ],
+    "comingSoon": [
+      {
+        "id": "api-integration",
+        "title": "API Integracija",
+        "description": "Integruokitės su ES PVM ir kitomis sistemomis - automatizuokite duomenų tikrinimą ir valdymą.",
+        "plannedVersion": "1.1.0"
+      },
+      {
+        "id": "mobile-app",
+        "title": "Mobili Aplikacija",
+        "description": "Valdykite savo verslą kelionėje su pilnai funkcionalia mobilia aplikacija.",
+        "plannedVersion": "1.2.0"
+      }
+    ]
+  },
   "keywords": [
     "virtualus biuras",
     "registracijos adresas",
@@ -47,6 +95,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-firebase-hooks": "^5.1.1",
+    "semver": "^7.5.4",
     "tailwindcss": "^3.3.2"
   }
 }

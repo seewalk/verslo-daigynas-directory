@@ -75,31 +75,34 @@ const AdminLoginModal = ({ isOpen, onClose }) => {
       
       // Admin check is handled in the onAuthStateChanged listener
     } catch (err) {
-      console.error("Error signing in:", err);
-      
-      // Localized error messages
-      switch (err.code) {
-        case 'auth/invalid-email':
-          setError('Neteisingas el. pašto formatas.');
-          break;
-        case 'auth/user-disabled':
-          setError('Šis vartotojas užblokuotas.');
-          break;
-        case 'auth/user-not-found':
-          setError('Vartotojas su tokiu el. paštu nerastas.');
-          break;
-        case 'auth/wrong-password':
-          setError('Neteisingas slaptažodis.');
-          break;
-        case 'auth/too-many-requests':
-          setError('Per daug bandymų prisijungti. Bandykite vėliau.');
-          break;
-        default:
-          setError('Klaida bandant prisijungti. Bandykite dar kartą.');
-      }
-      
-      setLoading(false);
-    }
+  console.error("Error signing in:", err);
+  
+  // Localized error messages
+  switch (err.code) {
+    case 'auth/invalid-email':
+      setError('Neteisingas el. pašto formatas.');
+      break;
+    case 'auth/user-disabled':
+      setError('Šis vartotojas užblokuotas.');
+      break;
+    case 'auth/user-not-found':
+      setError('Vartotojas su tokiu el. paštu nerastas.');
+      break;
+    case 'auth/wrong-password':
+      setError('Neteisingas slaptažodis.');
+      break;
+    case 'auth/invalid-credential':
+      setError('Neteisingas el. paštas arba slaptažodis.');
+      break;
+    case 'auth/too-many-requests':
+      setError('Per daug bandymų prisijungti. Bandykite vėliau.');
+      break;
+    default:
+      setError(`Klaida bandant prisijungti: ${err.code}. Bandykite dar kartą.`);
+  }
+  
+  setLoading(false);
+}
   };
   
   // Handle password reset

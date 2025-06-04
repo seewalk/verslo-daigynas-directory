@@ -163,65 +163,83 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
     }
   };
   
-  // Register form submission
-  const handleRegisterSubmit = async (e) => {
-    e.preventDefault();
+// Register form submission
+const handleRegisterSubmit = async (e) => {
+  e.preventDefault();
+  
+  // Reset errors
+  setErrors({});
+  
+  // Simple validation
+  let formErrors = {};
+  if (!registerForm.companyName) formErrors.companyName = 'Įmonės pavadinimas yra privalomas';
+  if (!registerForm.email) formErrors.email = 'El. pašto adresas yra privalomas';
+  if (!registerForm.password) formErrors.password = 'Slaptažodis yra privalomas';
+  if (registerForm.password.length < 6) formErrors.password = 'Slaptažodis turi būti bent 6 simbolių ilgio';
+  if (registerForm.password !== registerForm.confirmPassword) {
+    formErrors.confirmPassword = 'Slaptažodžiai nesutampa';
+  }
+  if (!registerForm.agreeTerms) {
+    formErrors.agreeTerms = 'Turite sutikti su taisyklėmis ir sąlygomis';
+  }
+  
+  if (Object.keys(formErrors).length > 0) {
+    setErrors(formErrors);
+    return;
+  }
+  
+  // Start loading
+  setIsSubmitting(true);
+  
+  try {
+    // Register with Firebase Authentication
+    const userCredential = await createUserWithEmailAndPassword(auth, registerForm.email, registerForm.password);
+    const user = userCredential.user;
     
-    // Reset errors
-    setErrors({});
+    // Initialize Firestore
+    const db = getFirestore();
     
-    // Simple validation
-    let formErrors = {};
-    if (!registerForm.companyName) formErrors.companyName = 'Įmonės pavadinimas yra privalomas';
-    if (!registerForm.email) formErrors.email = 'El. pašto adresas yra privalomas';
-    if (!registerForm.password) formErrors.password = 'Slaptažodis yra privalomas';
-    if (registerForm.password.length < 6) formErrors.password = 'Slaptažodis turi būti bent 6 simbolių ilgio';
-    if (registerForm.password !== registerForm.confirmPassword) {
-      formErrors.confirmPassword = 'Slaptažodžiai nesutampa';
+    // Create a new document in the users collection
+    await setDoc(doc(db, "users", user.uid), {
+      displayName: registerForm.companyName,
+      email: registerForm.email,
+      role: "user",  // Default role is 'user'
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      photoURL: "",
+      uid: user.uid,
+      favorites: [],  // Initialize with an empty array
+    });
+    
+    console.log("User document created successfully in Firestore");
+    
+    // Success - close modal after a short delay to show success message
+    setSuccessMessage('Registracija sėkminga!');
+    setTimeout(() => {
+      onClose();
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Registration error:', error.code, error.message);
+    
+    // Translate Firebase errors to user-friendly Lithuanian messages
+    switch (error.code) {
+      case 'auth/email-already-in-use':
+        setErrors({ email: 'Šis el. pašto adresas jau užregistruotas' });
+        break;
+      case 'auth/invalid-email':
+        setErrors({ email: 'Neteisingas el. pašto formatas' });
+        break;
+      case 'auth/weak-password':
+        setErrors({ password: 'Per silpnas slaptažodis, naudokite bent 6 simbolius' });
+        break;
+      default:
+        setErrors({ general: 'Klaida registruojantis. Bandykite dar kartą.' });
     }
-    if (!registerForm.agreeTerms) {
-      formErrors.agreeTerms = 'Turite sutikti su taisyklėmis ir sąlygomis';
-    }
-    
-    if (Object.keys(formErrors).length > 0) {
-      setErrors(formErrors);
-      return;
-    }
-    
-    // Start loading
-    setIsSubmitting(true);
-    
-    try {
-      // Register with Firebase
-      await createUserWithEmailAndPassword(auth, registerForm.email, registerForm.password);
-      
-      // Success - close modal after a short delay to show success message
-      setSuccessMessage('Registracija sėkminga!');
-      setTimeout(() => {
-        onClose();
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Registration error:', error.code);
-      
-      // Translate Firebase errors to user-friendly Lithuanian messages
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          setErrors({ email: 'Šis el. pašto adresas jau užregistruotas' });
-          break;
-        case 'auth/invalid-email':
-          setErrors({ email: 'Neteisingas el. pašto formatas' });
-          break;
-        case 'auth/weak-password':
-          setErrors({ password: 'Per silpnas slaptažodis, naudokite bent 6 simbolius' });
-          break;
-        default:
-          setErrors({ general: 'Klaida registruojantis. Bandykite dar kartą.' });
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   
   // Forgot password handler
   const handleForgotPassword = async () => {

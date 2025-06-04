@@ -14,7 +14,9 @@ import {
   collection,
   query,
   where,
-  getDocs
+  getDocs,
+  updateDoc,
+  serverTimestamp
 } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import Footer from '../../components/Footer';
@@ -101,6 +103,29 @@ const Dashboard = () => {
         
         const claimsSnapshot = await getDocs(claimsQuery);
         const claimsData = [];
+// Update user role if needed based on claims
+if (claimsData.length > 0 && userData.role !== 'admin' && userData.role !== 'vendor' && user?.uid) {
+  // User has approved claims but no vendor role yet
+  console.log("User has approved claims but no vendor role - updating role");
+  
+  // Update the Firestore document with the new role
+  try {
+    await updateDoc(doc(db, "users", user.uid), {
+      role: 'vendor',
+      roleUpdatedAt: serverTimestamp()
+    });
+    
+    console.log(`Updated user ${user.uid} role to vendor in database`);
+    
+    // Also update local state
+    setUserProfile(prevProfile => ({
+      ...prevProfile,
+      role: 'vendor'
+    }));
+  } catch (error) {
+    console.error("Error updating user role in Firestore:", error);
+  }
+}
         const claimVendorIds = new Set();
         
         // Process approved claims
@@ -198,34 +223,48 @@ const Dashboard = () => {
         
         setVendorProfiles(vendorData);
         
-        // 5. Final logic check for role determination
-        if (userData.role !== 'admin' && vendorData.length > 0 && userData.role !== 'vendor') {
-          // User has associated vendors but no vendor role
-          console.log("User has associated vendors but no vendor role - updating role");
-          setUserProfile(prevProfile => ({
-            ...prevProfile,
-            role: 'vendor'
-          }));
-        }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        setLoading(false);
-      }
-    };
-    
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        fetchUserData(currentUser);
-      } else {
-        router.push('/');
-      }
+ // 5. Final logic check for role determination
+if (userData.role !== 'admin' && vendorData.length > 0 && userData.role !== 'vendor' && user?.uid) {
+  // User has associated vendors but no vendor role
+  console.log("User has associated vendors but no vendor role - updating role");
+  
+  // Update the Firestore document with the new role
+  try {
+    await updateDoc(doc(db, "users", user.uid), {
+      role: 'vendor',
+      roleUpdatedAt: serverTimestamp()
     });
     
-    return () => unsubscribe();
-  }, [router]);
+    console.log(`Updated user ${user.uid} role to vendor in database`);
+    
+    // Also update local state
+    setUserProfile(prevProfile => ({
+      ...prevProfile,
+      role: 'vendor'
+    }));
+  } catch (error) {
+    console.error("Error updating user role in Firestore:", error);
+  }
+}
+
+setLoading(false);
+} catch (error) {
+  console.error("Error fetching user data:", error);
+  setLoading(false);
+}
+};
+
+const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+  if (currentUser) {
+    setUser(currentUser);
+    fetchUserData(currentUser);
+  } else {
+    router.push('/');
+  }
+});
+
+return () => unsubscribe();
+}, [router]);
   
   // Function to handle sign out
   const handleSignOut = async () => {

@@ -10,6 +10,7 @@ import {
   doc, 
   updateDoc, 
   serverTimestamp,
+  writeBatch, // Add this import
   addDoc // Add this import
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -21,7 +22,7 @@ const ServiceRequestsList = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [responseText, setResponseText] = useState('');
   const [responseLoading, setResponseLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState('');  
 
   const db = getFirestore();
   const auth = getAuth();
@@ -81,64 +82,140 @@ const ServiceRequestsList = () => {
     }
     setLoading(false);
   };
-
-  const handleRespond = async (e) => {
-    e.preventDefault();
-    if (!selectedRequest || !responseText.trim()) return;
+const handleRespond = async (e) => {
+  e.preventDefault();
+  if (!selectedRequest || !responseText.trim()) return;
+  
+  setResponseLoading(true);
+  try {
+    // Update the document with response and set ownerUid
+    await updateDoc(doc(db, "serviceRequests", selectedRequest.id), {
+      responseText: responseText,
+      responseDate: serverTimestamp(),
+      status: 'completed',
+      updatedAt: serverTimestamp(),
+      ownerUid: user.uid  // Add this line
+    });
     
-    setResponseLoading(true);
+    // Create notification for the user
     try {
-      await updateDoc(doc(db, "serviceRequests", selectedRequest.id), {
-        responseText: responseText,
-        responseDate: serverTimestamp(),
-        status: 'completed',
-        updatedAt: serverTimestamp()
+      await addDoc(collection(db, "notifications"), {
+        type: 'service_request_response',
+        title: 'Atsakymas į jūsų užklausą',
+        message: `${selectedRequest.vendorName} atsakė į jūsų užklausą "${selectedRequest.requestTitle}"`,
+        userId: selectedRequest.userId,
+        read: false,
+        createdAt: serverTimestamp()
       });
-      
-      // Create notification for the user
-      try {
-        await addDoc(collection(db, "notifications"), {
-          type: 'service_request_response',
-          title: 'Atsakymas į jūsų užklausą',
-          message: `${selectedRequest.vendorName} atsakė į jūsų užklausą "${selectedRequest.requestTitle}"`,
-          userId: selectedRequest.userId,
-          read: false,
-          createdAt: serverTimestamp()
-        });
-      } catch (notifError) {
-        console.error("Error creating notification:", notifError);
-        // Continue even if notification fails
-      }
-      
-      // Update local state
-      setServiceRequests(prevRequests => 
-        prevRequests.map(req => 
-          req.id === selectedRequest.id 
-            ? { 
-                ...req, 
-                responseText, 
-                responseDate: new Date().toLocaleString('lt-LT'), 
-                status: 'completed' 
-              } 
-            : req
-        )
-      );
-      
-      setSelectedRequest({
-        ...selectedRequest,
-        responseText,
-        responseDate: new Date().toLocaleString('lt-LT'),
-        status: 'completed'
-      });
-      
-      // Reset form
-      setResponseLoading(false);
-    } catch (error) {
-      console.error("Error responding to request:", error);
-      setError("Įvyko klaida siunčiant atsakymą. Bandykite vėliau.");
-      setResponseLoading(false);
+    } catch (notifError) {
+      console.error("Error creating notification:", notifError);
+      // Continue even if notification fails
     }
-  };
+    
+    // Update local state
+    setServiceRequests(prevRequests => 
+      prevRequests.map(req => 
+        req.id === selectedRequest.id 
+          ? { 
+              ...req, 
+              responseText, 
+              responseDate: new Date().toLocaleString('lt-LT'), 
+              status: 'completed',
+              ownerUid: user.uid  // Also update the local state
+            } 
+          : req
+      )
+    );
+    
+    setSelectedRequest({
+      ...selectedRequest,
+      responseText,
+      responseDate: new Date().toLocaleString('lt-LT'),
+      status: 'completed',
+      ownerUid: user.uid  // And update the selected request state
+    });
+    
+    // Reset form
+    setResponseLoading(false);
+  } catch (error) {
+    console.error("Error responding to request:", error);
+    setError("Įvyko klaida siunčiant atsakymą. Bandykite vėliau.");
+    setResponseLoading(false);
+  }
+};
+
+// Fix existing service requests
+const fixExistingRequests = async (userId) => {
+  // Make sure we have a valid user ID
+  if (!userId) {
+    console.error("Cannot fix requests: No user ID provided");
+    return;
+  }
+  
+  try {
+    // Get businesses owned by this user
+    const businessClaimsQuery = query(
+      collection(db, "businessClaims"),
+      where("userId", "==", userId), // Use the passed userId parameter
+      where("status", "==", "approved")
+    );
+    
+    const businessClaimsSnapshot = await getDocs(businessClaimsQuery);
+    const vendorIds = businessClaimsSnapshot.docs.map(doc => doc.data().vendorId);
+    
+    if (vendorIds.length === 0) {
+      console.log("No approved business claims found");
+      return;
+    }
+    
+    // Find completed requests with null ownerUid
+    const requestsToFixQuery = query(
+      collection(db, "serviceRequests"),
+      where("vendorId", "in", vendorIds),
+      where("status", "==", "completed")
+    );
+    
+    const requestsSnapshot = await getDocs(requestsToFixQuery);
+    
+    // Use a batch to update all documents at once
+    const batch = writeBatch(db);
+    let updateCount = 0;
+    
+    requestsSnapshot.forEach(docSnapshot => {
+      const data = docSnapshot.data();
+      if (!data.ownerUid) {
+        batch.update(doc(db, "serviceRequests", docSnapshot.id), {
+          ownerUid: userId // Use the passed userId parameter
+        });
+        updateCount++;
+      }
+    });
+    
+    if (updateCount > 0) {
+      await batch.commit();
+      console.log(`Fixed ${updateCount} completed requests`);
+    }
+  } catch (error) {
+    console.error("Error fixing existing requests:", error);
+  }
+};
+
+// Then call this function in useEffect when loading
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    setUser(currentUser);
+    if (currentUser) {
+      fetchServiceRequests(currentUser.uid);
+      // Add this line to fix existing requests
+      fixExistingRequests(currentUser.uid);
+    } else {
+      setServiceRequests([]);
+      setLoading(false);
+    }
+  });
+
+  return () => unsubscribe();
+}, [auth]);
 
   const getStatusBadge = (status) => {
     switch (status) {

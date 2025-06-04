@@ -1,151 +1,74 @@
 import React from 'react';
-import Head from 'next/head';
-import { motion } from 'framer-motion';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import SimpleVendorCTA from '../components/SimpleVendorCTA';
+import { motion } from 'framer-motion';
+import FeatureCard from '../components/FeatureCard';
+import featuresData from '../data/features';
 
-export default function ServicesPage() {
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
+const PlatformFeaturesPage = () => {
+  // Get features from our data
+  const { userFeatures, vendorFeatures, platformFeatures } = featuresData;
+  
+  // Statistics for highlight section
+  const statistics = [
+    { value: '100+', label: 'Tiekėjų' },
+    { value: '500+', label: 'Verslo klientų' },
+    { value: '15+', label: 'Lietuvos miestų' },
+    { value: '97%', label: 'Klientų pasitenkinimas' }
+  ];
+  
+  const renderFeaturesSection = (features, title) => {
+    return (
+      <div className="mt-12 mb-16">
+        <h3 className="text-2xl font-bold text-gray-800 mb-8 text-center">
+          {title}
+          <div className="mt-2 mx-auto w-20 h-1 bg-blue-600 rounded"></div>
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <FeatureCard key={feature.id} feature={feature} index={index} />
+          ))}
+        </div>
+      </div>
+    );
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { type: "spring", stiffness: 100, damping: 10 }
-    }
+  // Get all coming soon features
+  const comingSoonFeatures = [
+    ...userFeatures.filter(f => f.comingSoon),
+    ...vendorFeatures.filter(f => f.comingSoon),
+    ...platformFeatures.filter(f => f.comingSoon)
+  ];
+
+  // Coming Soon Features section
+  const renderComingSoonFeaturesSection = () => {
+    if (comingSoonFeatures.length === 0) return null;
+    
+    return (
+      <div className="mt-12 mb-16 bg-gray-50 py-8 px-4 rounded-2xl border border-dashed border-gray-300">
+        <h3 className="text-2xl font-bold text-gray-800 mb-8 text-center">
+          Ruošiamos Funkcijos
+          <div className="mt-2 mx-auto w-20 h-1 bg-amber-500 rounded"></div>
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {comingSoonFeatures.map((feature, index) => (
+            <FeatureCard key={feature.id} feature={feature} index={index} />
+          ))}
+        </div>
+      </div>
+    );
   };
-
-  // Free services offered by Verslo Daigynas
-  const freeServices = [
-    {
-      title: "Nemokamas įmonės profilis",
-      description: "Sukurkite nemokamą įmonės profilį su pagrindine kontaktine informacija, paslaugų aprašymu ir logotipu.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-      )
-    },
-    {
-      title: "Įmonių paieška",
-      description: "Naudokitės pažangia paieškos funkcija, kad greitai rastumėte tinkamus verslo partnerius pagal paslaugų tipą ar lokaciją.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      )
-    },
-    {
-      title: "Google vertinimai",
-      description: "Automatiškai sinchronizuojami Google vertinimai padeda potencialiems klientams greičiau priimti sprendimus, pasitikint kitų nuomone.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-        </svg>
-      )
-    },
-    {
-      title: "Viešai prieinami kontaktai",
-      description: "Jūsų įmonės kontaktinė informacija tampa lengvai prieinama potencialiems klientams ir partneriams.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      )
-    }
-  ];
-
-  // Value-added premium services (if applicable)
-  const premiumServices = [
-    {
-      title: "Išskirtinis profilis",
-      description: "Pasirūpinkite, kad jūsų įmonė būtų labiau pastebima su išskirtiniu profiliu kataloguose ir paieškos rezultatuose.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-        </svg>
-      )
-    },
-    {
-      title: "Išsamus analitikos portalas",
-      description: "Gaukite detalią analitiką, lankytojų demografinius duomenis ir įžvalgas apie tai, kaip vartotojai sąveikauja su jūsų įmonės profiliu.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      )
-    },
-    {
-      title: "Pagalba ir konsultacijos",
-      description: "Gaukite prioritetinę pagalbą ir konsultacijas, kaip optimizuoti jūsų įmonės profilį ir padidinti matomumą.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      )
-    },
-    {
-      title: "Aukščiausios kategorijos profiliai",
-      description: "Išskirtiniai profiliai su pasirinktiniais vizualais, išplėstiniais aprašymais ir aukštesniu reitingu paieškos rezultatuose.",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-        </svg>
-      )
-    }
-  ];
-
-  // How It Works steps
-  const howItWorksSteps = [
-    {
-      number: "01",
-      title: "Sukurkite paskyrą",
-      description: "Sukurkite nemokamą paskyrą mūsų platformoje per kelias minutes."
-    },
-    {
-      number: "02",
-      title: "Užpildykite profilio informaciją",
-      description: "Pridėkite savo įmonės kontaktinę informaciją, aprašymą, paslaugų sąrašą ir logotipą."
-    },
-    {
-      number: "03",
-      title: "Patvirtinkite savo įmonę",
-      description: "Patvirtinkite savo įmonę, kad padidintumėte patikimumą ir matomumą."
-    },
-    {
-      number: "04",
-      title: "Būkite matomi klientams",
-      description: "Potencialūs klientai gali rasti jūsų įmonę paieškoje ir kataloguose."
-    }
-  ];
 
   return (
-    <>
-      <Head>
-        <title>Paslaugos - Verslo Daigynas</title>
-        <meta name="description" content="Susipažinkite su Verslo Daigynas nemokamomis paslaugomis. Sukurkite įmonės profilį, didinkite savo matomumą ir raskite patikimus verslo partnerius." />
-      </Head>
-
-      <Header />
-      
-      {/* Hero Banner with gradient overlay */}
+    <div className="bg-gray-50">
+      {/* Hero Section */}
+       <Header />
       <div className="relative w-full overflow-hidden mb-6">
+        {/* Image with gradient overlay */}
         <div className="relative">
           <img
-            src="/services-banner.jpg" // Replace with your actual services banner image
-            alt="Verslo Daigynas paslaugos"
+            src="/banner.jpg"
+            alt="Verslo Daigynas hero banner"
             className="w-full h-[300px] sm:h-[350px] md:h-[400px] object-cover z-0 relative"
             loading="lazy"
           />
@@ -161,447 +84,359 @@ export default function ServicesPage() {
             className="text-center max-w-3xl w-full"
           >
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4 drop-shadow-md">
-              Mūsų paslaugos
+              Verslo Daigyno Funkcijos
             </h1>
             <p className="text-base md:text-xl opacity-90 max-w-2xl mx-auto mb-4 sm:mb-8 drop-shadow">
-              Nemokama verslo įmonių katalogo platforma, padedanti augti jūsų verslui
+              Viskas, ko reikia jūsų verslui augti – nuo administracinių paslaugų iki verslo partnerių paieškos. 
+            Atraskite platformos galimybes ir kaip jos gali padėti jūsų verslui.
             </p>
           </motion.div>
-        </div>
+          
+            {/* Navigation Section */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-6 mb-8">
+        <a 
+          href="/paslaugos" 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium inline-flex items-center shadow-md transition-all hover:shadow-lg"
+        >
+          Naršyti paslaugas
+          <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </a>
+        <a 
+          href="/pretenduoti" 
+          className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 rounded-lg font-medium inline-flex items-center shadow-sm transition-all"
+        >
+          Tapti tiekėju
+        </a>
       </div>
-
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* Introduction Section */}
-        <motion.section 
-          className="mb-16 text-center"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.h2 
-            className="text-3xl font-bold text-gray-800 mb-4"
-            variants={itemVariants}
-          >
-            Nemokamas verslo katalogas
-          </motion.h2>
-          <motion.p 
-            className="text-lg text-gray-600 max-w-3xl mx-auto"
-            variants={itemVariants}
-          >
-            Verslo Daigynas yra nemokama platforma, skirta padėti verslams didinti matomumą, 
-            rasti patikimus partnerius ir plėsti savo klientų bazę. Mūsų tikslas - sujungti įmones 
-            ir klientus patogiu, skaidriu ir efektyviu būdu.
-          </motion.p>
-        </motion.section>
-
-        {/* Free Services Grid */}
-        <motion.section 
-          className="mb-20"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.1 }}
-        >
-          <motion.div 
-            className="flex items-center mb-10"
-            variants={itemVariants}
-          >
-            <div className="flex-1 h-px bg-gray-200"></div>
-            <h2 className="px-6 text-2xl font-bold text-gray-800">Nemokamos paslaugos</h2>
-            <div className="flex-1 h-px bg-gray-200"></div>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {freeServices.map((service, index) => (
-              <motion.div 
-                key={index}
-                className="bg-white p-6 rounded-xl shadow-md flex"
-                variants={itemVariants}
-              >
-                <div className="mr-4 mt-1">
-                  <div className="bg-blue-100 p-3 rounded-full">
-                    {service.icon}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{service.title}</h3>
-                  <p className="text-gray-600">{service.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          
-          <motion.div 
-            className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mt-8"
-            variants={itemVariants}
-          >
-            <p className="text-gray-700 font-medium">
-              Verslo Daigynas yra ir visada išliks nemokama platforma pagrindiniams verslo poreikiams.
-              Mūsų misija - padėti verslams augti be papildomų išlaidų.
-            </p>
-          </motion.div>
-        </motion.section>
-
-        {/* How It Works Section */}
-        <motion.section 
-          className="mb-20 bg-white p-8 md:p-10 rounded-xl shadow-md"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.1 }}
-        >
-          <motion.h2 
-            className="text-3xl font-bold text-gray-800 mb-10 text-center"
-            variants={itemVariants}
-          >
-            Kaip tai veikia?
-          </motion.h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-            {howItWorksSteps.map((step, index) => (
-              <motion.div 
-                key={index} 
-                className="text-center"
-                variants={itemVariants}
-              >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 text-white text-2xl font-bold mb-4">
-                  {step.number}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">{step.title}</h3>
-                <p className="text-gray-600">{step.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* Premium Services Section (if applicable) - use same layout as Free Services*/}
-        <motion.section 
-          className="mb-16"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.1 }}
-        >
-          <motion.div 
-            className="flex items-center mb-10"
-            variants={itemVariants}
-          >
-            <div className="flex-1 h-px bg-gray-200"></div>
-            <h2 className="px-6 text-2xl font-bold text-gray-800">Papildomos paslaugos</h2>
-            <div className="flex-1 h-px bg-gray-200"></div>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {premiumServices.map((service, index) => (
-              <motion.div 
-                key={index}
-                className="bg-white p-6 rounded-xl shadow-md flex"
-                variants={itemVariants}
-              >
-                <div className="mr-4 mt-1">
-                  <div className="bg-blue-100 p-3 rounded-full">
-                    {service.icon}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{service.title}</h3>
-                  <p className="text-gray-600">{service.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          
-          <motion.div 
-            className="mt-10"
-            variants={itemVariants}
-          >
-            <a 
-              href="/kontaktai" 
-              className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors shadow-sm"
-            >
-              Sužinokite daugiau
-            </a>
-          </motion.div>
-        </motion.section>
-
-        {/* Testimonials Section */}
-        <motion.section 
-          className="mb-16 bg-blue-50 p-8 md:p-12 rounded-xl"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.1 }}
-        >
-          <motion.div 
-            className="text-center mb-10"
-            variants={itemVariants}
-          >
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Mūsų klientų atsiliepimai</h2>
-            <p className="text-gray-600 max-w-3xl mx-auto">
-              Perskaitykite, ką mūsų klientai sako apie bendradarbiavimą su Verslo Daigynas.
-            </p>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <motion.div 
-              className="bg-white p-6 rounded-xl shadow-md"
-              variants={itemVariants}
-            >
-              <div className="flex mb-4">
-                {Array(5).fill(0).map((_, i) => (
-                  <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-gray-600 italic mb-4">
-                "Verslo Daigynas platforma padėjo mums rasti naujų klientų ir partnerių. Paprastas ir intuityvus naudojimas leido greitai sukurti patrauklų įmonės profilį."
-              </p>
-              <div className="flex items-center">
-                <img src="/testimonial-1.jpg" alt="Testimonial" className="w-10 h-10 rounded-full mr-3" />
-                <div>
-                  <p className="font-medium text-gray-800">Jonas Jonaitis</p>
-                  <p className="text-sm text-gray-500">UAB "Technologijų Sprendimai"</p>
-                </div>
-              </div>
-            </motion.div>
-            
-            <motion.div 
-              className="bg-white p-6 rounded-xl shadow-md"
-              variants={itemVariants}
-            >
-              <div className="flex mb-4">
-                {Array(5).fill(0).map((_, i) => (
-                  <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-gray-600 italic mb-4">
-                "Rekomenduojame Verslo Daigynas visiems, kurie nori didinti savo verslo matomumą internete. Puikus sprendimas, ypač mažoms ir vidutinėms įmonėms."
-              </p>
-              <div className="flex items-center">
-                <img src="/testimonial-2.jpg" alt="Testimonial" className="w-10 h-10 rounded-full mr-3" />
-                <div>
-                  <p className="font-medium text-gray-800">Laura Petraitienė</p>
-                  <p className="text-sm text-gray-500">MB "Žalias Dizainas"</p>
-                </div>
-              </div>
-            </motion.div>
-            
-            <motion.div 
-              className="bg-white p-6 rounded-xl shadow-md"
-              variants={itemVariants}
-            >
-              <div className="flex mb-4">
-                {Array(5).fill(0).map((_, i) => (
-                  <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-gray-600 italic mb-4">
-                "Per pirmą mėnesį platformoje jau gavome kelias užklausas apie mūsų teikiamas paslaugas. Paprastas ir efektyvus būdas pritraukti naujų klientų."
-              </p>
-              <div className="flex items-center">
-                <img src="/testimonial-3.jpg" alt="Testimonial" className="w-10 h-10 rounded-full mr-3" />
-                <div>
-                  <p className="font-medium text-gray-800">Marius Kazlauskas</p>
-                  <p className="text-sm text-gray-500">UAB "Statybų Partneriai"</p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </motion.section>
-
-        {/* CTA Section */}
-        <SimpleVendorCTA />
-
-        {/* FAQ Section */}
-        <motion.section 
-          className="mb-16 mt-20"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.1 }}
-        >
-          <motion.h2 
-            className="text-3xl font-bold text-gray-800 mb-10 text-center"
-            variants={itemVariants}
-          >
-            Dažniausiai užduodami klausimai
-          </motion.h2>
-          
-          <div className="space-y-4">
-            <motion.div 
-              className="bg-white p-6 rounded-xl shadow-md"
-              variants={itemVariants}
-            >
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Ar tikrai Verslo Daigynas yra visiškai nemokamas?</h3>
-              <p className="text-gray-600">
-                Taip, pagrindinės Verslo Daigynas platformos funkcijos yra visiškai nemokamos. Jūs galite sukurti įmonės profilį, 
-                pridėti kontaktinę informaciją, paslaugų aprašymą ir logotipą be jokių mokesčių.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              className="bg-white p-6 rounded-xl shadow-md"
-              variants={itemVariants}
-            >
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Kaip galiu sukurti savo įmonės profilį?</h3>
-              <p className="text-gray-600">
-                Sukurti įmonės profilį yra labai paprasta. Užsiregistruokite platformoje, užpildykite pagrindinę informaciją 
-                apie savo įmonę, pridėkite kontaktinius duomenis, aprašykite savo paslaugas ir įkelkite logotipą. 
-                Visa tai užtrunka vos kelias minutes.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              className="bg-white p-6 rounded-xl shadow-md"
-              variants={itemVariants}
-            >
-                            <h3 className="text-xl font-semibold text-gray-800 mb-2">Ar galiu redaguoti savo įmonės profilį?</h3>
-              <p className="text-gray-600">
-                Taip, jūs galite bet kada atnaujinti ir redaguoti savo įmonės profilį. Prisijunkite prie savo paskyros, 
-                eikite į profilio nustatymus ir atlikite norimus pakeitimus. Atnaujinimai atsispindės iš karto.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              className="bg-white p-6 rounded-xl shadow-md"
-              variants={itemVariants}
-            >
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Kaip veikia Google vertinimų rodymas?</h3>
-              <p className="text-gray-600">
-                Verslo Daigynas automatiškai sinchronizuoja jūsų įmonės Google vertinimus ir rodo juos jūsų profilyje. 
-                Tai padeda potencialiems klientams greitai įvertinti jūsų įmonės patikimumą ir reputaciją.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              className="bg-white p-6 rounded-xl shadow-md"
-              variants={itemVariants}
-            >
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Ar galiu pretenduoti į jau sukurtą įmonės profilį?</h3>
-              <p className="text-gray-600">
-                Taip, jei esate įmonės atstovas, galite pretenduoti į jau esamą įmonės profilį Verslo Daigynas platformoje. 
-                Apsilankykite įmonės profilyje ir spauskite mygtuką "Pretenduoti į įrašą". Mūsų komanda patvirtins jūsų tapatybę 
-                ir suteiks prieigą prie profilio valdymo.
-              </p>
-            </motion.div>
-          </div>
-          
-          <motion.div 
-            className="mt-10 text-center"
-            variants={itemVariants}
-          >
-            <a 
-              href="/daznai-uzduodami-klausimai" 
-              className="inline-block border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-3 px-8 rounded-lg transition-colors"
-            >
-              Visi DUK
-            </a>
-          </motion.div>
-        </motion.section>
-      </div>
+    </div>
       
-      {/* Stats Section */}
-      <div className="bg-blue-600 text-white py-16 mb-16">
-        <div className="max-w-6xl mx-auto px-6">
+  </div>     
+
+      {/* Statistics Section */}
+      <section className="py-12 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gray-50 opacity-80">
+          <div className="absolute inset-0" style={{ 
+            backgroundImage: 'radial-gradient(circle, #e1e7fa 1px, transparent 1px)',
+            backgroundSize: '20px 20px'
+          }}></div>
+        </div>
+        
+        <div className="max-w-5xl mx-auto relative z-10">
           <motion.div 
-            className="text-center mb-12"
+            className="max-w-3xl mx-auto text-center mb-10"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl font-bold mb-4">Verslo Daigynas skaičiais</h2>
-            <p className="text-lg opacity-90 max-w-3xl mx-auto">
-              Auganti nemokama platforma, padedanti verslams atrasti vieni kitus.
+            <svg className="w-10 h-10 text-blue-400 mx-auto mb-3 opacity-50" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+            </svg>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
+              Verslo Daigynas skaičiais
+            </h2>
+            <p className="text-blue-600">
+              Pasitikėjimu pagrįsta verslo ekosistema, jungianti tiekėjus ir klientus
             </p>
           </motion.div>
           
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ staggerChildren: 0.2, delayChildren: 0.3 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center p-6 md:p-8 bg-white rounded-xl shadow-sm border border-gray-200"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <motion.div 
-              className="text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-            >
-              <div className="text-5xl font-bold mb-2">1,500+</div>
-              <div className="text-blue-200">Įmonių profilių</div>
-            </motion.div>
-            
-            <motion.div 
-              className="text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              viewport={{ once: true }}
-            >
-              <div className="text-5xl font-bold mb-2">15+</div>
-              <div className="text-blue-200">Lietuvos miestų</div>
-            </motion.div>
-            
-            <motion.div 
-              className="text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              <div className="text-5xl font-bold mb-2">12K+</div>
-              <div className="text-blue-200">Mėnesinių lankytojų</div>
-            </motion.div>
-            
-            <motion.div 
-              className="text-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              viewport={{ once: true }}
-            >
-              <div className="text-5xl font-bold mb-2">97%</div>
-              <div className="text-blue-200">Klientų pasitenkinimas</div>
-            </motion.div>
+            {statistics.map((stat, index) => (
+              <motion.div 
+                key={index}
+                className="flex flex-col items-center"
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 + (index * 0.1) }}
+              >
+                <span className="text-3xl font-bold text-blue-600 mb-1">
+                  {stat.value}
+                </span>
+                <span className="text-sm text-gray-600">
+                  {stat.label}
+                </span>
+              </motion.div>
+            ))}
           </motion.div>
         </div>
+      </section>
+
+      {/* Main features content */}
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* User Features */}
+        {renderFeaturesSection(userFeatures.filter(f => !f.comingSoon), "Verslui ieškančiam paslaugų")}
+        
+        {/* Vendor Features */}
+        {renderFeaturesSection(vendorFeatures.filter(f => !f.comingSoon), "Paslaugų teikėjams")}
+        
+        {/* Platform Features */}
+        {renderFeaturesSection(platformFeatures.filter(f => !f.comingSoon), "Unikalios platformos funkcijos")}
+        
+        {/* Coming Soon Features */}
+        {renderComingSoonFeaturesSection()}
       </div>
       
-      {/* Get Started Section */}
-      <div className="max-w-6xl mx-auto px-6 mb-16">
-        <motion.div 
-          className="bg-white p-8 md:p-12 rounded-xl shadow-lg text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">Pradėkite naudotis jau šiandien</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto mb-8">
-            Prisijunkite prie augančio Verslo Daigynas tinklo ir leiskite potencialiems klientams jus lengvai surasti. 
-            Registracija užtrunka vos kelias minutes ir yra visiškai nemokama.
-          </p>
-          <motion.a 
-            href="/pretenduoti" 
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-10 rounded-lg transition-colors shadow-sm"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            Užsiregistruoti nemokamai
-          </motion.a>
-        </motion.div>
-      </div>
-
-      <Footer />
-    </>
+      {/* CTA Section */}
+      <section className="py-16 overflow-hidden relative">
+        {/* Background elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-800 z-0"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400 rounded-full opacity-10 transform translate-x-1/3 -translate-y-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-400 rounded-full opacity-10 transform -translate-x-1/3 translate-y-1/3"></div>
+        
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            {/* Left content - Text section */}
+            <motion.div 
+              className="md:w-7/12 mb-10 md:mb-0 text-white"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <motion.span 
+                className="inline-block py-1 px-3 bg-white bg-opacity-20 rounded-full text-sm font-medium mb-4"
+                initial={{ opacity: 0, y: -20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+              >
+                Teikėjams
+              </motion.span>
+              
+              <motion.h2 
+                className="text-3xl md:text-4xl font-bold mb-6 leading-tight"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                Prisijunkite prie Verslo Daigyno ir plėskite savo klientų ratą
+              </motion.h2>
+              
+              <motion.p 
+                className="text-blue-100 text-lg mb-8 max-w-xl"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                Tapkite Verslo Daigyno paslaugų tiekėju ir pasiekite tūkstančius potencialių klientų, ieškančių būtent jūsų teikiamų paslaugų. Padidinkite savo verslo matomumą ir pritraukite daugiau užsakymų.
+              </motion.p>
+              
+              {/* Benefits list */}
+              <motion.div 
+                className="mb-8"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <div className="grid md:grid-cols-2 gap-3">
+                  {[
+                    "Pasiekite tikslinę auditoriją",
+                    "Padidinkite savo matomumą",
+                    "Gaukite naujų klientų srautą",
+                    "Paprasta registracija ir valdymas",
+                    "Kurkite patikimo tiekėjo reputaciją",
+                    "Išsiskirkite iš konkurentų"
+                  ].map((benefit, index) => (
+                    <div key={index} className="flex items-center">
+                      <svg className="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+              
+              {/* CTAs */}
+              <motion.div 
+                className="flex flex-wrap gap-4"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                <a 
+                  href="/pretenduoti" 
+                  className="bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium inline-flex items-center shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+                >
+                  Registruotis dabar
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </a>
+                <a 
+                  href="/tiekeju-info" 
+                  className="bg-transparent border border-white text-white hover:bg-white hover:bg-opacity-10 px-6 py-3 rounded-lg font-medium inline-flex items-center transition-all"
+                >
+                  Sužinoti daugiau
+                </a>
+              </motion.div>
+            </motion.div>
+            
+            {/* Right content - Form card */}
+            <motion.div 
+              className="md:w-5/12 md:pl-10"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform -rotate-1 hover:rotate-0 transition-all duration-500">
+                <div className="p-6 sm:p-8">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Greita registracija</h3>
+                  <p className="text-gray-600 mb-6">Užpildykite formą ir mes su jumis susisieksime per 24 val.</p>
+                  
+                  <form className="space-y-4">
+                    <div>
+                      <label htmlFor="company-name" className="block text-sm font-medium text-gray-700 mb-1">Įmonės pavadinimas</label>
+                      <input 
+                        type="text" 
+                        id="company-name" 
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                        placeholder="UAB Pavyzdys"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">El. paštas</label>
+                      <input 
+                        type="email" 
+                        id="email" 
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                        placeholder="info@jusuimone.lt"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="service-type" className="block text-sm font-medium text-gray-700 mb-1">Paslaugų tipas</label>
+                      <select 
+                        id="service-type" 
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      >
+                        <option value="">Pasirinkite paslaugų tipą</option>
+                        <option value="address">Juridinis adresas</option>
+                        <option value="accounting">Buhalterija</option>
+                        <option value="legal">Teisės paslaugos</option>
+                        <option value="marketing">Marketingas</option>
+                        <option value="other">Kita</option>
+                      </select>
+                    </div>
+                    
+                    <div className="pt-2">
+                      <button 
+                        type="submit" 
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center"
+                      >
+                        Registruotis kaip tiekėjas
+                        <svg className="w-5 h-5 ml-2 animate-pulse" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                          <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  </form>
+                  
+                  <p className="text-xs text-gray-500 mt-4 text-center">
+                    Paspausdami mygtuką „Registruotis", sutinkate su mūsų <a href="/privatumo-politika" className="text-blue-600 hover:underline">privatumo politika</a> ir <a href="/naudojimo-salygos" className="text-blue-600 hover:underline">naudojimo sąlygomis</a>.
+                  </p>
+                </div>
+              </div>
+              
+              {/* Trust indicators */}
+              <div className="mt-6 text-center">
+                <p className="text-blue-100 mb-2 text-sm">Mumis pasitiki</p>
+                <div className="flex justify-center items-center space-x-6">
+                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <span className="text-white text-xs font-medium">100+</span>
+                    <p className="text-blue-100 text-xs">tiekėjų</p>
+                  </div>
+                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <span className="text-white text-xs font-medium">500+</span>
+                    <p className="text-blue-100 text-xs">užklausų/mėn.</p>
+                  </div>
+                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <span className="text-white text-xs font-medium">98%</span>
+                    <p className="text-blue-100 text-xs">pasitenkinimas</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+      
+      {/* FAQ Section */}
+      <section className="py-16 px-4 bg-white">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
+            Dažniausiai užduodami klausimai
+            <div className="mt-2 mx-auto w-20 h-1 bg-blue-600 rounded"></div>
+          </h2>
+          
+          <div className="space-y-6">
+            {[
+              {
+                question: "Ar galiu išbandyti platformą nemokamai?",
+                answer: "Taip, Verslo Daigynas siūlo nemokamą registraciją ir pagrindinių funkcijų naudojimą. Galite peržiūrėti tiekėjus, susisiekti su jais ir valdyti savo profilį be jokių įsipareigojimų."
+              },
+              {
+                question: "Kaip tapti paslaugų teikėju?",
+                answer: "Norėdami tapti paslaugų teikėju, užpildykite registracijos formą platformoje arba susisiekite su mumis el. paštu. Po registracijos patikros gausite prieigą prie įmonės profilio valdymo įrankių."
+              },
+              {
+                question: "Kokius dokumentus reikia pateikti registruojant verslą?",
+                answer: "Registruojant verslą kaip tiekėją, reikia pateikti įmonės registracijos dokumentus, atstovo tapatybės dokumentą ir papildomai, priklausomai nuo teikiamų paslaugų pobūdžio, gali būti reikalingi licencijų ar kvalifikacijos patvirtinimo dokumentai."
+              },
+              {
+                question: "Kaip veikia paslaugų užklausos?",
+                answer: "Paslaugų užklausas galite siųsti tiesiogiai pasirinktiems teikėjams per platformos žinučių sistemą. Užpildykite užklausos formą, nurodydami savo poreikius, ir tiekėjai su jumis susisieks per platformą arba jūsų nurodytu kontaktu."
+              },
+              {
+                question: "Kada bus prieinamos naujos funkcijos?",
+                answer: "Verslo Daigynas nuolat tobulina platformą. Funkcijos, pažymėtos kaip 'Jau greitai', planuojamos įdiegti artimiausių 3-6 mėnesių laikotarpiu. Sekite mūsų naujienlaiškį, kad nepražiopsotumėte atnaujinimų!"
+              }
+            ].map((faq, index) => (
+              <motion.div 
+                key={index}
+                className="bg-gray-50 rounded-lg p-6 border border-gray-200"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 * index }}
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.question}</h3>
+                <p className="text-gray-600">{faq.answer}</p>
+              </motion.div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-10">
+            <p className="text-gray-600 mb-4">Neradote atsakymo į savo klausimą?</p>
+            <a 
+              href="/kontaktai" 
+              className="inline-flex items-center text-blue-600 font-medium hover:text-blue-800"
+            >
+              Susisiekite su mumis
+              <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
   );
-}
+};
+
+export default PlatformFeaturesPage;

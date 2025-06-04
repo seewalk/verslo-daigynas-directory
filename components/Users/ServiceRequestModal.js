@@ -12,14 +12,14 @@ import {
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-const ServiceRequestModal = ({ isOpen, onClose, vendorId, vendorName }) => {
+const ServiceRequestModal = ({ isOpen, onClose, vendorId, vendorName, isWidget = false,
+  onRequestSubmitted = null }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState('user'); // 'user', 'vendor', 'admin'
-  
   // Form data structure tailored for service requests
   const [formData, setFormData] = useState({
     fullName: '',
@@ -36,6 +36,39 @@ const ServiceRequestModal = ({ isOpen, onClose, vendorId, vendorName }) => {
   const router = useRouter();
   const db = getFirestore();
   const auth = getAuth();
+
+  const fixExistingRequests = async () => {
+  try {
+    // Find all requests without ownerUid
+    const requestsQuery = query(
+      collection(db, "serviceRequests"),
+      where("ownerUid", "==", null)
+    );
+    
+    const requestsSnapshot = await getDocs(requestsQuery);
+    console.log(`Found ${requestsSnapshot.size} requests without ownerUid`);
+    
+    if (requestsSnapshot.empty) {
+      console.log("No requests need fixing");
+      return;
+    }
+    
+    // Update each request
+    const batch = writeBatch(db);
+    requestsSnapshot.docs.forEach(docSnapshot => {
+      const data = docSnapshot.data();
+      // Set ownerUid to userId
+      batch.update(doc(db, "serviceRequests", docSnapshot.id), {
+        ownerUid: data.userId
+      });
+    });
+    
+    await batch.commit();
+    console.log(`Fixed ${requestsSnapshot.size} requests`);
+  } catch (error) {
+    console.error("Error fixing existing requests:", error);
+  }
+};
   
   // Check authentication and get user role
   useEffect(() => {
@@ -75,6 +108,9 @@ const ServiceRequestModal = ({ isOpen, onClose, vendorId, vendorName }) => {
     
     return () => unsubscribe();
   }, [auth, db, vendorId]);
+  
+  // If modal is not open and not a widget, don't render anything
+  if (!isOpen && !isWidget) return null;
   
   // Handle input changes
   const handleInputChange = (e) => {
@@ -123,69 +159,74 @@ const ServiceRequestModal = ({ isOpen, onClose, vendorId, vendorName }) => {
   };
   
   // Submit service request
-  const handleSubmitRequest = async () => {
-    if (!user) {
-      // Save form data to session storage and redirect to login
-      sessionStorage.setItem('serviceRequestData', JSON.stringify({
-        formData,
-        vendorId,
-        vendorName,
-        redirectPath: router.asPath
-      }));
-      router.push(`/auth?redirect=${encodeURIComponent(router.asPath)}&action=service-request`);
-      return;
-    }
+const handleSubmitRequest = async () => {
+  if (!user) {
+    // Save form data to session storage and redirect to login
+    sessionStorage.setItem('serviceRequestData', JSON.stringify({
+      formData,
+      vendorId,
+      vendorName,
+      redirectPath: router.asPath
+    }));
+    router.push(`/auth?redirect=${encodeURIComponent(router.asPath)}&action=service-request`);
+    return;
+  }
+  
+  setLoading(true);
+  setError('');
+  
+  try {
+    // Create the service request document
+    await addDoc(collection(db, "serviceRequests"), {
+      vendorId: vendorId,
+      vendorName: vendorName,
+      userId: user.uid,
+      userEmail: user.email,
+      userFullName: formData.fullName,
+      userPhone: formData.phone,
+      requestTitle: formData.requestTitle,
+      requestDetails: formData.requestDetails,
+      preferredContactMethod: formData.preferredContactMethod,
+      urgency: formData.urgency,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      responseText: null,
+      responseDate: null,
+      isArchived: false,
+      // Set ownerUid if available from vendor data, otherwise leave null
+      ownerUid: user.uid, // Will be filled in by a backend function or admin assignment
+    });
     
-    setLoading(true);
-    setError('');
-    
+    // Optional: Create a notification document for the vendor
     try {
-      // Create the service request document
-      await addDoc(collection(db, "serviceRequests"), {
+      await addDoc(collection(db, "notifications"), {
+        type: 'service_request',
+        title: 'Nauja paslaugų užklausa',
+        message: `${formData.fullName} pateikė naują užklausą: "${formData.requestTitle}"`,
         vendorId: vendorId,
-        vendorName: vendorName,
         userId: user.uid,
-        userEmail: user.email,
-        userFullName: formData.fullName,
-        userPhone: formData.phone,
-        requestTitle: formData.requestTitle,
-        requestDetails: formData.requestDetails,
-        preferredContactMethod: formData.preferredContactMethod,
-        urgency: formData.urgency,
-        status: 'pending',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        responseText: null,
-        responseDate: null,
-        isArchived: false,
-        // Set ownerUid if available from vendor data, otherwise leave null
-        ownerUid: null, // Will be filled in by a backend function or admin assignment
+        read: false,
+        createdAt: serverTimestamp()
       });
-      
-      // Optional: Create a notification document for the vendor
-      try {
-        await addDoc(collection(db, "notifications"), {
-          type: 'service_request',
-          title: 'Nauja paslaugų užklausa',
-          message: `${formData.fullName} pateikė naują užklausą: "${formData.requestTitle}"`,
-          vendorId: vendorId,
-          userId: user.uid,
-          read: false,
-          createdAt: serverTimestamp()
-        });
-      } catch (notifError) {
-        console.error("Error creating notification:", notifError);
-        // Continue even if notification fails
-      }
-      
-      setSuccess(true);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error submitting service request:", error);
-      setError('Įvyko klaida. Bandykite dar kartą vėliau.');
-      setLoading(false);
+    } catch (notifError) {
+      console.error("Error creating notification:", notifError);
+      // Continue even if notification fails
     }
-  };
+    
+    setSuccess(true);
+    setLoading(false);
+    
+    // Call the onRequestSubmitted callback if provided and the request was successful
+    if (onRequestSubmitted && typeof onRequestSubmitted === 'function') {
+      onRequestSubmitted();
+    }
+  } catch (error) {
+    console.error("Error submitting service request:", error);
+    setError('Įvyko klaida. Bandykite dar kartą vėliau.');
+    setLoading(false);
+  }
+};
   
   // Validation helpers
   const validateEmail = (email) => {
@@ -205,9 +246,6 @@ const ServiceRequestModal = ({ isOpen, onClose, vendorId, vendorName }) => {
     visible: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: 50 }
   };
-  
-  // If modal is not open, don't render anything
-  if (!isOpen) return null;
   
   // Block access if user is the vendor owner (they can't send requests to themselves)
   if (userRole === 'vendor' && user?.uid === vendorId) {
